@@ -1,0 +1,111 @@
+/* ==========================================================================
+   MEDIKIOSK — Design Tokens & Base Global Styles
+   ========================================================================== */
+
+:root {
+  /* Exact Light Theme Design Tokens */
+  --background: #F4F8F6;
+  --surface: #FFFFFF;
+  --surface-secondary: #EAF3EF;
+  --primary: #176B50;
+  --primary-hover: #125A43;
+  --primary-light: #E3F2EC;
+  --text-primary: #17352C;
+  --text-secondary: #63736D;
+  --border: #D5E0DB;
+  --danger: #C94A4A;
+  --warning: #B7791F;
+  --success: #27805F;
+
+  /* Accent & Shadow Helpers */
+  --primary-focus-ring: rgba(23, 107, 80, 0.25);
+  --danger-light: #FDEDED;
+  --warning-light: #FEF7EA;
+  --success-light: #E7F6F0;
+  --shadow-sm: 0 2px 8px rgba(23, 53, 44, 0.04);
+  --shadow-md: 0 8px 24px rgba(23, 53, 44, 0.08);
+  --shadow-lg: 0 16px 48px rgba(23, 53, 44, 0.12);
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 26px;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans Devanagari", "Nirmala UI", Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-primary);
+  background-color: var(--background);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+[data-theme="dark"] {
+  /* Exact Dark Theme Design Tokens */
+  --background: #0E1513;
+  --surface: #17211E;
+  --surface-secondary: #202C28;
+  --primary: #3AA77D;
+  --primary-hover: #49B88C;
+  --primary-light: #17392E;
+  --text-primary: #F1F6F4;
+  --text-secondary: #B2C1BB;
+  --border: #33413D;
+  --danger: #EF7777;
+  --warning: #E1AC55;
+  --success: #4BC18F;
+
+  /* Accent & Shadow Helpers */
+  --primary-focus-ring: rgba(58, 167, 125, 0.35);
+  --danger-light: #2A1717;
+  --warning-light: #2B2212;
+  --success-light: #132D23;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-family: inherit;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+button, input, textarea, select {
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* Ensure accessible minimum touch target size across kiosk */
+button,
+input[type="button"],
+input[type="submit"],
+.touch-target {
+  min-height: 44px;
+}
