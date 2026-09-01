@@ -1,9 +1,14 @@
 import React from 'react'
+import { getTriggerByKey } from '../data/redFlags'
 
-export default function ChatBubble({ message, t }) {
+export default function ChatBubble({ message, t, language }) {
   const isAi = message.sender === 'ai'
+  const isFollowUp = message.type === 'followup'
 
-  // If message has dynamic question or greeting key, render in active language
+  // Determine active language
+  const activeLang = language || (t?.interview?.patientName === 'आप (मरीज़)' ? 'Hindi' : 'English')
+
+  // If message has dynamic question, greeting or followup key, render in active language
   let displayText = message.text
   if (isAi && t?.interview) {
     if (message.type === 'greeting') {
@@ -12,6 +17,11 @@ export default function ChatBubble({ message, t }) {
       displayText = t.interview.questions[message.questionIndex]
     } else if (message.type === 'completion') {
       displayText = `${t.interview.interviewCompleteTitle}. ${t.interview.interviewCompleteSubtitle}`
+    } else if (isFollowUp && message.triggerKey) {
+      const trigger = getTriggerByKey(message.triggerKey)
+      if (trigger?.followUp?.[activeLang]) {
+        displayText = trigger.followUp[activeLang]
+      }
     }
   }
 
@@ -20,8 +30,11 @@ export default function ChatBubble({ message, t }) {
     : (t?.interview?.patientName || 'You (Patient)')
 
   return (
-    <div className={`chat-message-row ${isAi ? 'ai-row' : 'patient-row'}`}>
-      <div className={`chat-avatar ${isAi ? 'ai-avatar' : 'patient-avatar'}`} aria-hidden="true">
+    <div className={`chat-message-row ${isAi ? 'ai-row' : 'patient-row'} ${isFollowUp ? 'followup-row' : ''}`}>
+      <div
+        className={`chat-avatar ${isAi ? 'ai-avatar' : 'patient-avatar'} ${isFollowUp ? 'followup-avatar' : ''}`}
+        aria-hidden="true"
+      >
         {isAi ? (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="avatar-icon-svg">
             <path d="M12 5v14M5 12h14" />
@@ -33,8 +46,15 @@ export default function ChatBubble({ message, t }) {
         )}
       </div>
 
-      <div className={`chat-bubble ${isAi ? 'ai-bubble' : 'patient-bubble'}`}>
-        <div className="chat-sender-name">{senderName}</div>
+      <div className={`chat-bubble ${isAi ? 'ai-bubble' : 'patient-bubble'} ${isFollowUp ? 'followup-bubble' : ''}`}>
+        <div className="chat-sender-name-group">
+          <span className="chat-sender-name">{senderName}</span>
+          {isFollowUp && (
+            <span className="chat-followup-tag">
+              {t?.interview?.followUpTag || 'Follow-up'}
+            </span>
+          )}
+        </div>
         <div className="chat-text">{displayText}</div>
         {message.time && <div className="chat-timestamp">{message.time}</div>}
       </div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import ChatBubble from '../components/ChatBubble'
+import { detectRedFlagTrigger } from '../data/redFlags'
 
 // SVG mic icon — no emoji
 const MicIcon = () => (
@@ -22,13 +23,19 @@ export default function Interview({
   onSetFinished,
   onFinishInterview,
   onBack,
+  language = 'English',
   t
 }) {
   const [inputText, setInputText] = useState('')
   const [voiceToast, setVoiceToast] = useState(false)
+  const [pendingFollowUp, setPendingFollowUp] = useState(null)
+
   const chatBottomRef = useRef(null)
   const inputRef = useRef(null)
-  const msgIdCounterRef = useRef(1)
+  const msgIdCounterRef = useRef(conversation.length + 1)
+  const firedKeysRef = useRef(
+    conversation.filter((m) => m.followUpKey).map((m) => m.followUpKey)
+  )
 
   const scrollToBottom = () => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -36,7 +43,7 @@ export default function Interview({
 
   useEffect(() => {
     scrollToBottom()
-  }, [conversation, isFinished])
+  }, [conversation, isFinished, pendingFollowUp])
 
   // Initialize first question if conversation is empty
   useEffect(() => {
@@ -59,37 +66,102 @@ export default function Interview({
     if (!text || isFinished) return
 
     const msgId = msgIdCounterRef.current++
-    const patientMsg = {
-      id: `msg-patient-${msgId}`,
-      sender: 'patient',
-      text,
-      time: 'Just now'
-    }
 
-    const nextIndex = currentQuestionIndex + 1
-    const updatedMessages = [...conversation, patientMsg]
-
-    if (nextIndex < t.interview.questions.length) {
-      const nextAiQuestion = {
-        id: `msg-ai-${msgId + 1}`,
-        sender: 'ai',
-        type: 'question',
-        questionIndex: nextIndex,
-        text: t.interview.questions[nextIndex],
+    if (pendingFollowUp) {
+      // Patient is answering a red-flag follow-up question
+      const patientMsg = {
+        id: `msg-patient-${msgId}`,
+        sender: 'patient',
+        followUpKey: pendingFollowUp.key,
+        text,
         time: 'Just now'
       }
-      onUpdateConversation([...updatedMessages, nextAiQuestion])
-      onUpdateQuestionIndex(nextIndex)
+
+      const resumeIdx = pendingFollowUp.resumeIndex
+      setPendingFollowUp(null)
+
+      if (resumeIdx < t.interview.questions.length) {
+        const nextAiQuestion = {
+          id: `msg-ai-${msgId + 1}`,
+          sender: 'ai',
+          type: 'question',
+          questionIndex: resumeIdx,
+          text: t.interview.questions[resumeIdx],
+          time: 'Just now'
+        }
+        onUpdateConversation([...conversation, patientMsg, nextAiQuestion])
+        onUpdateQuestionIndex(resumeIdx)
+      } else {
+        const completionMsg = {
+          id: `msg-ai-final-${msgId + 1}`,
+          sender: 'ai',
+          type: 'completion',
+          text: `${t.interview.interviewCompleteTitle}. ${t.interview.interviewCompleteSubtitle}`,
+          time: 'Just now'
+        }
+        onUpdateConversation([...conversation, patientMsg, completionMsg])
+        onSetFinished(true)
+      }
     } else {
-      const completionMsg = {
-        id: `msg-ai-final-${msgId + 1}`,
-        sender: 'ai',
-        type: 'completion',
-        text: `${t.interview.interviewCompleteTitle}. ${t.interview.interviewCompleteSubtitle}`,
+      // Patient is answering a fixed base question (tagged with answerIndex)
+      const patientMsg = {
+        id: `msg-patient-${msgId}`,
+        sender: 'patient',
+        answerIndex: currentQuestionIndex,
+        text,
         time: 'Just now'
       }
-      onUpdateConversation([...updatedMessages, completionMsg])
-      onSetFinished(true)
+
+      // Check if this response triggers a red-flag follow-up branch
+      const trigger = detectRedFlagTrigger(currentQuestionIndex, text, firedKeysRef.current)
+
+      if (trigger) {
+        firedKeysRef.current.push(trigger.key)
+        const followUpText = trigger.followUp[language] || trigger.followUp.English || trigger.followUp.Hindi
+
+        const aiFollowUpMsg = {
+          id: `msg-ai-followup-${msgId + 1}`,
+          sender: 'ai',
+          type: 'followup',
+          triggerKey: trigger.key,
+          text: followUpText,
+          time: 'Just now'
+        }
+
+        onUpdateConversation([...conversation, patientMsg, aiFollowUpMsg])
+        setPendingFollowUp({
+          key: trigger.key,
+          resumeIndex: currentQuestionIndex + 1
+        })
+        // Note: We do NOT advance currentQuestionIndex until follow-up is answered
+      } else {
+        // Normal question advance
+        const nextIndex = currentQuestionIndex + 1
+        const updatedMessages = [...conversation, patientMsg]
+
+        if (nextIndex < t.interview.questions.length) {
+          const nextAiQuestion = {
+            id: `msg-ai-${msgId + 1}`,
+            sender: 'ai',
+            type: 'question',
+            questionIndex: nextIndex,
+            text: t.interview.questions[nextIndex],
+            time: 'Just now'
+          }
+          onUpdateConversation([...updatedMessages, nextAiQuestion])
+          onUpdateQuestionIndex(nextIndex)
+        } else {
+          const completionMsg = {
+            id: `msg-ai-final-${msgId + 1}`,
+            sender: 'ai',
+            type: 'completion',
+            text: `${t.interview.interviewCompleteTitle}. ${t.interview.interviewCompleteSubtitle}`,
+            time: 'Just now'
+          }
+          onUpdateConversation([...updatedMessages, completionMsg])
+          onSetFinished(true)
+        }
+      }
     }
 
     setInputText('')
@@ -109,10 +181,13 @@ export default function Interview({
     }, 4000)
   }
 
-  const currentSuggestions =
-    !isFinished && currentQuestionIndex < t.interview.quickSuggestions.length
-      ? t.interview.quickSuggestions[currentQuestionIndex]
-      : []
+  const currentSuggestions = isFinished
+    ? []
+    : pendingFollowUp
+    ? (t.interview.followUpQuickReplies || ['Yes', 'No', 'Not sure'])
+    : currentQuestionIndex < t.interview.quickSuggestions.length
+    ? t.interview.quickSuggestions[currentQuestionIndex]
+    : []
 
   return (
     <div className="kiosk-container interview-card" role="main">
@@ -138,7 +213,7 @@ export default function Interview({
       <div className="chat-viewport" role="log" aria-live="polite">
         <div className="chat-messages-list">
           {conversation.map((msg) => (
-            <ChatBubble key={msg.id} message={msg} t={t} />
+            <ChatBubble key={msg.id} message={msg} t={t} language={language} />
           ))}
           <div ref={chatBottomRef} />
         </div>

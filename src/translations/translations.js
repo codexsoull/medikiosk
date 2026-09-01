@@ -146,7 +146,9 @@ export const translations = {
       interviewCompleteSubtitle: 'Your responses have been structured for your doctor.',
       voiceBtnLabel: 'Voice input',
       voiceToast: 'Voice input will be connected in the next integration phase.',
-      voiceInputTitle: 'Voice input (Integration Pending)'
+      voiceInputTitle: 'Voice input (Integration Pending)',
+      followUpTag: 'Follow-up',
+      followUpQuickReplies: ['Yes', 'No', 'Not sure']
     },
     upload: {
       title: 'Previous Medical Records',
@@ -163,6 +165,18 @@ export const translations = {
       skipRecordsBtn: 'Skip for now',
       continueBtn: 'Continue',
       skipAndContinueBtn: 'Skip for now & Continue'
+    },
+    processing: {
+      title: 'AI Clinical Synthesis',
+      subtitle: 'Structuring and verifying your intake record for your physician',
+      steps: [
+        'Reviewing and standardizing responses',
+        'Cross-referencing uploaded documents',
+        'Checking for clinical red flags and alerts',
+        'Generating structured clinical summary'
+      ],
+      footerNote: 'Your physician will review this structured record during your consultation.',
+      continueBtn: 'Continue to Review'
     },
     review: {
       title: 'Review Your Information',
@@ -208,6 +222,7 @@ export const translations = {
       actionHeader: 'Action',
       statusReady: 'Ready for Review',
       statusAccepted: 'Accepted by Physician',
+      flaggedBadge: 'Flagged',
       viewCaseBtn: 'View Case →',
       emptyCases: 'No cases currently waiting for review.',
       sharedDataNotice: 'Connected to Kiosk Case Pipeline • Live Shared State'
@@ -405,7 +420,9 @@ export const translations = {
       interviewCompleteSubtitle: 'आपके उत्तर डॉक्टर के लिए संरचित कर दिए गए हैं।',
       voiceBtnLabel: 'वॉयस इनपुट',
       voiceToast: 'वॉयस इनपुट अगले एकीकरण चरण में उपलब्ध होगा।',
-      voiceInputTitle: 'वॉयस इनपुट (एकीकरण लंबित)'
+      voiceInputTitle: 'वॉयस इनपुट (एकीकरण लंबित)',
+      followUpTag: 'फॉलो-अप',
+      followUpQuickReplies: ['हाँ', 'नहीं', 'पक्का नहीं']
     },
     upload: {
       title: 'पिछले चिकित्सा रिकॉर्ड',
@@ -422,6 +439,18 @@ export const translations = {
       skipRecordsBtn: 'अभी छोड़ें',
       continueBtn: 'आगे बढ़ें',
       skipAndContinueBtn: 'छोड़ें और आगे बढ़ें'
+    },
+    processing: {
+      title: 'एआई क्लिनिकल संश्लेषण',
+      subtitle: 'आपके चिकित्सक के लिए इनटेक रिकॉर्ड संरचित और सत्यापित किया जा रहा है',
+      steps: [
+        'उत्तरों की समीक्षा और मानकीकरण',
+        'अपलोड किए गए दस्तावेज़ों का मिलान',
+        'क्लिनिकल चेतावनियों और अलर्ट की जांच',
+        'संरचित क्लिनिकल सारांश तैयार करना'
+      ],
+      footerNote: 'आपके परामर्श के दौरान चिकित्सक इस संरचित रिकॉर्ड की समीक्षा करेंगे।',
+      continueBtn: 'समीक्षा के लिए आगे बढ़ें'
     },
     review: {
       title: 'अपनी जानकारी की समीक्षा करें',
@@ -467,6 +496,7 @@ export const translations = {
       actionHeader: 'कार्रवाई',
       statusReady: 'समीक्षा के लिए तैयार',
       statusAccepted: 'डॉक्टर द्वारा स्वीकृत',
+      flaggedBadge: 'चिह्नित',
       viewCaseBtn: 'केस देखें →',
       emptyCases: 'वर्तमान में समीक्षा के लिए कोई केस प्रतीक्षारत नहीं है।',
       sharedDataNotice: 'कियोस्क केस पाइपलाइन से जुड़ा • लाइव साझा स्थिति'

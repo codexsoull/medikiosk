@@ -20,6 +20,7 @@ export default function DoctorDashboard({
   const isAccepted = caseData.status === 'physician_accepted'
   const patient = caseData.patient || {}
   const summary = caseData.summary || {}
+  const hasAlerts = Array.isArray(caseData.clinicalAlerts) && caseData.clinicalAlerts.length > 0
 
   const caseMatches =
     (caseData.caseId && caseData.caseId.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -45,7 +46,7 @@ export default function DoctorDashboard({
 
           <button
             type="button"
-            className="secondary-button new-patient-btn"
+            className="secondary-button new-patient-btn touch-target"
             onClick={onStartNewIntake}
             title="Simulate new patient intake on Kiosk"
           >
@@ -137,22 +138,31 @@ export default function DoctorDashboard({
                   )}
                 </td>
                 <td className="cell-status">
-                  {isAccepted ? (
-                    <StatusBadge
-                      type="success"
-                      label={t.doctorDashboard.statusAccepted}
-                    />
-                  ) : (
-                    <StatusBadge
-                      type="warning"
-                      label={t.doctorDashboard.statusReady}
-                    />
-                  )}
+                  <div className="status-badges-group">
+                    {hasAlerts && (
+                      <StatusBadge
+                        type="danger"
+                        size="small"
+                        label={t.doctorDashboard.flaggedBadge || 'Flagged'}
+                      />
+                    )}
+                    {isAccepted ? (
+                      <StatusBadge
+                        type="success"
+                        label={t.doctorDashboard.statusAccepted}
+                      />
+                    ) : (
+                      <StatusBadge
+                        type="warning"
+                        label={t.doctorDashboard.statusReady}
+                      />
+                    )}
+                  </div>
                 </td>
                 <td className="cell-action text-right">
                   <button
                     type="button"
-                    className="primary-button view-case-action-btn"
+                    className="primary-button view-case-action-btn touch-target"
                     onClick={() => onOpenCase(caseData.caseId)}
                   >
                     <span>{t.doctorDashboard.viewCaseBtn}</span>

@@ -26,6 +26,8 @@ export default function DoctorCase({
   const patient = caseData.patient || {}
   const summary = isEditing ? editedFields : (caseData.summary || {})
   const docs = caseData.documents || []
+  const alerts = caseData.clinicalAlerts || []
+  const hasHighSeverity = alerts.some((a) => a.severity === 'high')
 
   const handleFieldChange = (fieldKey, value) => {
     setEditedFields((prev) => ({
@@ -132,13 +134,48 @@ export default function DoctorCase({
         </div>
       </div>
 
-      {/* Clinical Alerts Card — clean, no emoji */}
-      <div className="clinical-alerts-card">
-        <div className="alerts-card-header">
-          <strong>{t.doctorCase.clinicalAlerts}</strong>
+      {/* Clinical Alerts Card — Real Alerts or Fallback */}
+      {alerts.length === 0 ? (
+        <div className="clinical-alerts-card alerts-card-none">
+          <div className="alerts-card-header">
+            <strong>{t.doctorCase.clinicalAlerts}</strong>
+          </div>
+          <p className="alerts-content">{t.doctorCase.noAlerts}</p>
         </div>
-        <p className="alerts-content">{t.doctorCase.noAlerts}</p>
-      </div>
+      ) : (
+        <div className={`clinical-alerts-card ${hasHighSeverity ? 'alerts-card-high' : 'alerts-card-medium'}`}>
+          <div className="alerts-card-header">
+            <div className="alerts-header-title-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18" className="alerts-header-icon" aria-hidden="true">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <strong>{t.doctorCase.clinicalAlerts}</strong>
+              <span className="alerts-count-badge">{alerts.length}</span>
+            </div>
+          </div>
+          <ul className="alerts-items-list" aria-label={t.doctorCase.clinicalAlerts}>
+            {alerts.map((alert, idx) => {
+              const alertText = patient.language === 'Hindi' && alert.textHindi ? alert.textHindi : alert.text
+              const isHigh = alert.severity === 'high'
+              return (
+                <li key={idx} className={`alert-list-item ${isHigh ? 'alert-item-high' : 'alert-item-medium'}`}>
+                  <div className="alert-item-icon-wrapper" aria-hidden="true">
+                    <span className={`alert-indicator-dot ${isHigh ? 'dot-high' : 'dot-medium'}`}></span>
+                  </div>
+                  <div className="alert-item-body">
+                    <span className="alert-item-text">{alertText}</span>
+                  </div>
+                  <span className={`alert-severity-badge ${isHigh ? 'badge-high' : 'badge-medium'}`}>
+                    {isHigh ? 'Urgent Review' : 'Priority Attention'}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
 
       {/* Structured Clinical Sections Grid */}
       <div className="clinical-sections-grid">

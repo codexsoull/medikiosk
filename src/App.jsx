@@ -7,12 +7,18 @@ import OTPVerification from './screens/OTPVerification'
 import PatientDetails from './screens/PatientDetails'
 import Interview from './screens/Interview'
 import DocumentUpload from './screens/DocumentUpload'
+import AIProcessing from './screens/AIProcessing'
 import PatientReview from './screens/PatientReview'
 import SubmissionSuccess from './screens/SubmissionSuccess'
 import DoctorDashboard from './screens/DoctorDashboard'
 import DoctorCase from './screens/DoctorCase'
 import { translations } from './translations/translations'
-import { initialCaseData, generateStructuredSummaryFromAnswers } from './data/mockCase'
+import {
+  initialCaseData,
+  generateStructuredSummaryFromAnswers,
+  extractAnswersByIndex,
+  extractRedFlagResponses
+} from './data/mockCase'
 import './App.css'
 
 function getInitialLanguage() {
@@ -102,9 +108,22 @@ export default function App() {
     } else {
       // If patient is not yet submitted, generate preview summary so doctor sees current state
       if (!caseData.summary.chiefComplaint && conversation.length > 0) {
-        const answers = conversation.filter((m) => m.sender === 'patient').map((m) => m.text)
-        const generated = generateStructuredSummaryFromAnswers(answers)
-        setCaseData((prev) => ({ ...prev, summary: { ...prev.summary, ...generated } }))
+        const answersByIndex = extractAnswersByIndex(conversation)
+        const redFlags = extractRedFlagResponses(conversation)
+        const { summary, clinicalAlerts } = generateStructuredSummaryFromAnswers(answersByIndex, {
+          redFlags,
+          documentCount: (caseData.documents || []).length
+        })
+        setCaseData((prev) => ({
+          ...prev,
+          interview: {
+            answers: answersByIndex,
+            answersByIndex,
+            redFlags
+          },
+          summary: { ...prev.summary, ...summary },
+          clinicalAlerts: clinicalAlerts || []
+        }))
       }
       setScreen('doctor_dashboard')
     }
@@ -132,31 +151,55 @@ export default function App() {
   }
 
   const handleFinishInterview = () => {
-    const patientReplies = conversation
-      .filter((msg) => msg.sender === 'patient')
-      .map((msg) => msg.text.trim())
+    const answersByIndex = extractAnswersByIndex(conversation)
+    const redFlags = extractRedFlagResponses(conversation)
+    const { summary, clinicalAlerts } = generateStructuredSummaryFromAnswers(answersByIndex, {
+      redFlags,
+      documentCount: (caseData.documents || []).length
+    })
 
-    const generated = generateStructuredSummaryFromAnswers(patientReplies)
     setCaseData((prev) => ({
       ...prev,
       complaint: {
-        chiefComplaint: generated.chiefComplaint,
-        onset: patientReplies[1] || 'Recently',
-        severity: patientReplies[2] || 'Moderate',
-        associatedSymptoms: patientReplies[3] || 'None'
+        chiefComplaint: summary.chiefComplaint,
+        onset: answersByIndex[1] || 'Recently',
+        severity: answersByIndex[2] || 'Moderate',
+        associatedSymptoms: answersByIndex[3] || 'None'
       },
       interview: {
-        answers: patientReplies
+        answers: answersByIndex,
+        answersByIndex,
+        redFlags
       },
       summary: {
         ...prev.summary,
-        ...generated
-      }
+        ...summary
+      },
+      clinicalAlerts: clinicalAlerts || []
     }))
     setScreen('upload')
   }
 
   const handleUploadContinue = () => {
+    setScreen('processing')
+  }
+
+  const handleProcessingComplete = () => {
+    const answersByIndex = caseData.interview?.answersByIndex || extractAnswersByIndex(conversation)
+    const redFlags = caseData.interview?.redFlags || extractRedFlagResponses(conversation)
+    const { summary, clinicalAlerts } = generateStructuredSummaryFromAnswers(answersByIndex, {
+      redFlags,
+      documentCount: (caseData.documents || []).length
+    })
+
+    setCaseData((prev) => ({
+      ...prev,
+      summary: {
+        ...prev.summary,
+        ...summary
+      },
+      clinicalAlerts: clinicalAlerts || []
+    }))
     setScreen('review')
   }
 
@@ -294,6 +337,7 @@ export default function App() {
             onSetFinished={setIsInterviewFinished}
             onFinishInterview={handleFinishInterview}
             onBack={() => setScreen('details')}
+            language={language}
             t={t}
           />
         )}
@@ -308,6 +352,14 @@ export default function App() {
             onContinue={handleUploadContinue}
             onSkip={handleUploadContinue}
             onBack={() => setScreen('interview')}
+            t={t}
+          />
+        )}
+
+        {/* Step 5.5: AI Processing Transition */}
+        {screen === 'processing' && (
+          <AIProcessing
+            onComplete={handleProcessingComplete}
             t={t}
           />
         )}
