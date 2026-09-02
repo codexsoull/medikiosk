@@ -6,6 +6,8 @@ export default function PatientReview({
   onEditSection,
   onSubmit,
   onBack,
+  isSubmitting = false,
+  errorMessage = '',
   t
 }) {
   const [reviewConfirmed, setReviewConfirmed] = useState(false)
@@ -182,25 +184,45 @@ export default function PatientReview({
         </label>
       </div>
 
+      {/* Optional Submission Error Banner */}
+      {errorMessage && (
+        <div className="submit-error-banner" role="alert">
+          <span className="error-icon" aria-hidden="true">⚠️</span>
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       {/* Action Navigation Row */}
       <div className="action-buttons-row">
         <button
           type="button"
           className="secondary-button back-nav-btn"
           onClick={onBack}
+          disabled={isSubmitting}
         >
           {t.common.back}
         </button>
 
         <button
           type="button"
-          className={`primary-button submit-intake-btn touch-target ${!reviewConfirmed ? 'disabled-state' : ''}`}
+          className={`primary-button submit-intake-btn touch-target ${
+            !reviewConfirmed || isSubmitting ? 'disabled-state' : ''
+          }`}
           onClick={onSubmit}
-          disabled={!reviewConfirmed}
-          aria-disabled={!reviewConfirmed}
+          disabled={!reviewConfirmed || isSubmitting}
+          aria-disabled={!reviewConfirmed || isSubmitting}
         >
-          <span>{t.review.submitBtn}</span>
-          <span className="arrow-icon" aria-hidden="true">✓</span>
+          {isSubmitting ? (
+            <>
+              <span className="submit-spinner" aria-hidden="true"></span>
+              <span>{t.review.submittingBtn || 'Submitting...'}</span>
+            </>
+          ) : (
+            <>
+              <span>{t.review.submitBtn}</span>
+              <span className="arrow-icon" aria-hidden="true">✓</span>
+            </>
+          )}
         </button>
       </div>
     </div>

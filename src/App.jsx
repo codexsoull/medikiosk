@@ -19,6 +19,7 @@ import {
   extractAnswersByIndex,
   extractRedFlagResponses
 } from './data/mockCase'
+import { createCase } from './api/cases'
 import './App.css'
 
 function getInitialLanguage() {
@@ -49,6 +50,10 @@ export default function App() {
   const [language, setLanguage] = useState(getInitialLanguage)
   const [theme, setTheme] = useState(getInitialTheme)
   const [screen, setScreen] = useState('welcome')
+
+  // Submission State
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submissionError, setSubmissionError] = useState('')
 
   // Master Shared Mock Case State
   const [caseData, setCaseData] = useState(() => ({
@@ -203,13 +208,49 @@ export default function App() {
     setScreen('review')
   }
 
-  const handlePatientSubmit = () => {
-    setCaseData((prev) => ({
-      ...prev,
-      status: 'ready_for_doctor',
-      intakeTimestamp: new Date().toISOString()
-    }))
-    setScreen('success')
+  const handlePatientSubmit = async () => {
+    setIsSubmitting(true)
+    setSubmissionError('')
+
+    try {
+      const payload = {
+        patient_name: caseData.patient?.name || '',
+        age: caseData.patient?.age ? Number(caseData.patient.age) : null,
+        gender: caseData.patient?.gender || null,
+        mobile: caseData.patient?.mobile || '',
+        identity_verification_status: caseData.authentication?.status || 'not_authenticated',
+        consent_status: caseData.consent?.given ? 'given' : 'not_given',
+        consent_timestamp: caseData.consent?.timestamp || new Date().toISOString(),
+        chief_complaint: caseData.summary?.chiefComplaint || caseData.complaint?.chiefComplaint || '',
+        symptoms: caseData.complaint?.associatedSymptoms || '',
+        medical_history: caseData.summary?.pastMedicalHistory || '',
+        medications: caseData.summary?.medications || '',
+        allergies: caseData.summary?.allergies || '',
+        ai_summary: caseData.summary || {},
+        clinical_alerts: caseData.clinicalAlerts || [],
+        doctor_notes: caseData.physicianNotes || '',
+        case_status: 'ready_for_doctor'
+      }
+
+      const result = await createCase(payload)
+      const returnedCaseId = result.case_id || result.data?.case_id || caseData.caseId
+
+      setCaseData((prev) => ({
+        ...prev,
+        caseId: returnedCaseId,
+        status: 'ready_for_doctor',
+        intakeTimestamp: new Date().toISOString()
+      }))
+
+      setScreen('success')
+    } catch (error) {
+      console.error('Failed to submit patient intake to backend:', error)
+      setSubmissionError(
+        t.review?.submissionError || 'Unable to submit your case right now. Please try again.'
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleOpenDoctorDashboard = () => {
@@ -242,7 +283,7 @@ export default function App() {
   const handleStartNewIntake = () => {
     setCaseData({
       ...initialCaseData,
-      caseId: `CASE-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+      caseId: 'CASE-0001',
       patient: {
         name: '',
         age: '',
@@ -253,6 +294,8 @@ export default function App() {
     setConversation([])
     setCurrentQuestionIndex(0)
     setIsInterviewFinished(false)
+    setIsSubmitting(false)
+    setSubmissionError('')
     setScreen('welcome')
   }
 
@@ -371,6 +414,8 @@ export default function App() {
             onEditSection={(sectionKey) => setScreen(sectionKey)}
             onSubmit={handlePatientSubmit}
             onBack={() => setScreen('upload')}
+            isSubmitting={isSubmitting}
+            errorMessage={submissionError}
             t={t}
           />
         )}

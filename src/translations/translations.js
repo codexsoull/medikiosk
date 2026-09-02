@@ -195,6 +195,8 @@ export const translations = {
       docsCount: (count) => `${count} file${count === 1 ? '' : 's'} attached`,
       confirmCheckbox: 'I have reviewed the information I provided.',
       submitBtn: 'Submit Health History',
+      submittingBtn: 'Submitting Health History...',
+      submissionError: 'Unable to submit your case right now. Please try again.',
       backBtn: '← Back to Documents'
     },
     success: {
@@ -469,6 +471,8 @@ export const translations = {
       docsCount: (count) => `${count} फ़ाइलें संलग्न`,
       confirmCheckbox: 'मैंने अपने द्वारा प्रदान की गई जानकारी की समीक्षा कर ली है।',
       submitBtn: 'स्वास्थ्य विवरण जमा करें',
+      submittingBtn: 'स्वास्थ्य विवरण जमा हो रहा है...',
+      submissionError: 'इस समय आपका केस जमा नहीं किया जा सका। कृपया पुनः प्रयास करें।',
       backBtn: '← दस्तावेज़ों पर वापस'
     },
     success: {

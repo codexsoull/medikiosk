@@ -1692,6 +1692,44 @@
   white-space: pre-wrap;
 }
 
+.submit-error-banner {
+  margin-top: 16px;
+  padding: 12px 16px;
+  background-color: var(--danger-light);
+  border: 1.5px solid var(--danger);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  line-height: 1.4;
+}
+
+.submit-error-banner .error-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.submit-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  display: inline-block;
+  animation: submit-spin 0.8s linear infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes submit-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* --------------------------------------------------------------------------
    Screen 9: Submission Success Screen
    -------------------------------------------------------------------------- */
