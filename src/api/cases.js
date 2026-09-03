@@ -59,3 +59,86 @@ export async function fetchCaseById(id) {
   }
   return await response.json()
 }
+
+/**
+ * Maps raw backend case record to the frontend state format
+ * @param {Object} row - SQLite case record
+ * @returns {Object} Normalized caseData structure
+ */
+export function mapBackendCaseToFrontend(row) {
+  if (!row) return null
+
+  // Ensure ai_summary is an object
+  let summary = row.ai_summary
+  if (typeof summary === 'string') {
+    try {
+      summary = JSON.parse(summary)
+    } catch {
+      summary = { chiefComplaint: row.chief_complaint || '' }
+    }
+  }
+  if (!summary || typeof summary !== 'object') {
+    summary = {
+      chiefComplaint: row.chief_complaint || '',
+      historyOfPresentIllness: row.symptoms || '',
+      pastMedicalHistory: row.medical_history || '',
+      medications: row.medications || '',
+      allergies: row.allergies || '',
+      familyHistory: '',
+      personalHistory: '',
+      reviewOfSystems: ''
+    }
+  }
+
+  // Ensure clinical_alerts is an array
+  let clinicalAlerts = row.clinical_alerts
+  if (typeof clinicalAlerts === 'string') {
+    try {
+      clinicalAlerts = JSON.parse(clinicalAlerts)
+    } catch {
+      clinicalAlerts = []
+    }
+  }
+  if (!Array.isArray(clinicalAlerts)) {
+    clinicalAlerts = []
+  }
+
+  return {
+    id: row.id,
+    caseId: row.case_id || `CASE-${row.id}`,
+    status: row.case_status || 'ready_for_doctor',
+    intakeTimestamp: row.created_at || new Date().toISOString(),
+    patient: {
+      name: row.patient_name || 'Walk-in Patient',
+      age: row.age || '',
+      gender: row.gender || '',
+      mobile: row.mobile || '',
+      language: 'English'
+    },
+    consent: {
+      given: row.consent_status === 'given',
+      timestamp: row.consent_timestamp
+    },
+    authentication: {
+      status: row.identity_verification_status || 'not_authenticated'
+    },
+    complaint: {
+      chiefComplaint: row.chief_complaint || summary.chiefComplaint || '',
+      associatedSymptoms: row.symptoms || ''
+    },
+    summary: {
+      chiefComplaint: summary.chiefComplaint || row.chief_complaint || '',
+      historyOfPresentIllness: summary.historyOfPresentIllness || '',
+      pastMedicalHistory: summary.pastMedicalHistory || row.medical_history || '',
+      medications: summary.medications || row.medications || '',
+      allergies: summary.allergies || row.allergies || '',
+      familyHistory: summary.familyHistory || '',
+      personalHistory: summary.personalHistory || '',
+      reviewOfSystems: summary.reviewOfSystems || ''
+    },
+    clinicalAlerts: clinicalAlerts,
+    documents: [],
+    physicianNotes: row.doctor_notes || ''
+  }
+}
+

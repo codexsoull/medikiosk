@@ -1,5 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import StatusBadge from '../components/StatusBadge'
+import { fetchCases } from '../api/cases'
 
 // SVG search icon
 const SearchIcon = () => (
@@ -10,23 +11,50 @@ const SearchIcon = () => (
 )
 
 export default function DoctorDashboard({
-  caseData,
   onOpenCase,
   onStartNewIntake,
   t
 }) {
+  const [cases, setCases] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
 
-  const isAccepted = caseData.status === 'physician_accepted'
-  const patient = caseData.patient || {}
-  const summary = caseData.summary || {}
-  const hasAlerts = Array.isArray(caseData.clinicalAlerts) && caseData.clinicalAlerts.length > 0
+  const loadCases = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const response = await fetchCases()
+      setCases(Array.isArray(response.data) ? response.data : [])
+    } catch (err) {
+      console.error('Failed to load cases from backend:', err)
+      setError(
+        t.doctorDashboard?.loadError ||
+        'Unable to load patient cases. Please check the connection and try again.'
+      )
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  const caseMatches =
-    (caseData.caseId && caseData.caseId.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (patient.name && patient.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (summary.chiefComplaint && summary.chiefComplaint.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    searchQuery === ''
+  useEffect(() => {
+    loadCases()
+  }, [])
+
+  // Filter cases based on search query
+  const filteredCases = cases.filter((item) => {
+    const caseId = (item.case_id || item.caseId || '').toLowerCase()
+    const patientName = (item.patient_name || item.patient?.name || '').toLowerCase()
+    const complaint = (
+      item.chief_complaint ||
+      item.summary?.chiefComplaint ||
+      item.ai_summary?.chiefComplaint ||
+      ''
+    ).toLowerCase()
+    const query = searchQuery.toLowerCase().trim()
+
+    return !query || caseId.includes(query) || patientName.includes(query) || complaint.includes(query)
+  })
 
   return (
     <div className="physician-portal-container" role="main">
@@ -44,14 +72,26 @@ export default function DoctorDashboard({
             <span>{t.doctorDashboard.sharedDataNotice}</span>
           </div>
 
-          <button
-            type="button"
-            className="secondary-button new-patient-btn touch-target"
-            onClick={onStartNewIntake}
-            title="Simulate new patient intake on Kiosk"
-          >
-            + New Kiosk Intake
-          </button>
+          <div className="portal-header-actions-row">
+            <button
+              type="button"
+              className="secondary-button refresh-cases-btn touch-target"
+              onClick={loadCases}
+              disabled={loading}
+              title="Refresh case queue from database"
+            >
+              🔄 {t.doctorDashboard.retryBtn || 'Refresh'}
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button new-patient-btn touch-target"
+              onClick={onStartNewIntake}
+              title="Simulate new patient intake on Kiosk"
+            >
+              + New Kiosk Intake
+            </button>
+          </div>
         </div>
       </div>
 
@@ -59,7 +99,9 @@ export default function DoctorDashboard({
       <div className="portal-toolbar">
         <div className="queue-title-group">
           <h2>{t.doctorDashboard.todayCases}</h2>
-          <span className="queue-count-pill">{t.doctorDashboard.casesCount(caseMatches ? 1 : 0)}</span>
+          <span className="queue-count-pill">
+            {t.doctorDashboard.casesCount(filteredCases.length)}
+          </span>
         </div>
 
         <div className="queue-search-box">
@@ -98,83 +140,125 @@ export default function DoctorDashboard({
             </tr>
           </thead>
           <tbody>
-            {caseMatches ? (
-              <tr className="case-table-row">
-                <td className="cell-case-id">
-                  <strong>{caseData.caseId || 'CASE-2026-0001'}</strong>
-                  <span className="cell-sub-info">
-                    {caseData.intakeTimestamp
-                      ? new Date(caseData.intakeTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                      : 'Just now'}
-                  </span>
-                </td>
-                <td className="cell-patient">
-                  <div className="patient-avatar-cell">
-                    <span className="avatar-initial">
-                      {patient.name ? patient.name.charAt(0).toUpperCase() : 'P'}
-                    </span>
-                    <div>
-                      <strong className="patient-cell-name">{patient.name || 'Walk-in Patient'}</strong>
-                      <span className="patient-lang-tag">
-                        {patient.language ? `Intake: ${patient.language}` : 'English'}
-                      </span>
-                    </div>
+            {loading ? (
+              <tr>
+                <td colSpan="6" className="empty-queue-cell">
+                  <div className="table-loading-spinner-wrap">
+                    <span className="submit-spinner" aria-hidden="true"></span>
+                    <span>{t.doctorDashboard.loadingCases || 'Loading patient cases from database...'}</span>
                   </div>
                 </td>
-                <td className="cell-demographics">
-                  <span>
-                    {patient.age ? `${patient.age} yrs` : '—'} /{' '}
-                    {patient.gender ? (t.details.genderOptions[patient.gender] || patient.gender) : '—'}
-                  </span>
-                </td>
-                <td className="cell-complaint">
-                  <span className="complaint-highlight-pill">
-                    {summary.chiefComplaint || 'Pending interview'}
-                  </span>
-                  {caseData.documents && caseData.documents.length > 0 && (
-                    <span className="doc-count-micro" title={`${caseData.documents.length} records attached`}>
-                      {caseData.documents.length} doc{caseData.documents.length === 1 ? '' : 's'}
-                    </span>
-                  )}
-                </td>
-                <td className="cell-status">
-                  <div className="status-badges-group">
-                    {hasAlerts && (
-                      <StatusBadge
-                        type="danger"
-                        size="small"
-                        label={t.doctorDashboard.flaggedBadge || 'Flagged'}
-                      />
-                    )}
-                    {isAccepted ? (
-                      <StatusBadge
-                        type="success"
-                        label={t.doctorDashboard.statusAccepted}
-                      />
-                    ) : (
-                      <StatusBadge
-                        type="warning"
-                        label={t.doctorDashboard.statusReady}
-                      />
-                    )}
-                  </div>
-                </td>
-                <td className="cell-action text-right">
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan="6" className="empty-queue-cell error-cell">
+                  <p className="table-error-text">⚠️ {error}</p>
                   <button
                     type="button"
-                    className="primary-button view-case-action-btn touch-target"
-                    onClick={() => onOpenCase(caseData.caseId)}
+                    className="secondary-button retry-load-btn touch-target"
+                    onClick={loadCases}
                   >
-                    <span>{t.doctorDashboard.viewCaseBtn}</span>
+                    🔄 {t.doctorDashboard.retryBtn || 'Retry'}
                   </button>
                 </td>
               </tr>
-            ) : (
+            ) : filteredCases.length === 0 ? (
               <tr>
                 <td colSpan="6" className="empty-queue-cell">
                   <p>{t.doctorDashboard.emptyCases}</p>
                 </td>
               </tr>
+            ) : (
+              filteredCases.map((item) => {
+                const caseId = item.case_id || item.caseId || `CASE-${item.id}`
+                const patientName = item.patient_name || item.patient?.name || 'Walk-in Patient'
+                const age = item.age !== undefined && item.age !== null ? item.age : item.patient?.age
+                const gender = item.gender || item.patient?.gender
+                const complaint =
+                  item.chief_complaint ||
+                  item.summary?.chiefComplaint ||
+                  item.ai_summary?.chiefComplaint ||
+                  'No complaint recorded'
+
+                const alerts = Array.isArray(item.clinical_alerts)
+                  ? item.clinical_alerts
+                  : Array.isArray(item.clinicalAlerts)
+                  ? item.clinicalAlerts
+                  : []
+
+                const hasAlerts = alerts.length > 0
+                const isAccepted =
+                  item.case_status === 'physician_accepted' ||
+                  item.status === 'physician_accepted'
+
+                const timeString = item.created_at
+                  ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : item.intakeTimestamp
+                  ? new Date(item.intakeTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : 'Just now'
+
+                return (
+                  <tr key={item.id || caseId} className="case-table-row">
+                    <td className="cell-case-id">
+                      <strong>{caseId}</strong>
+                      <span className="cell-sub-info">{timeString}</span>
+                    </td>
+                    <td className="cell-patient">
+                      <div className="patient-avatar-cell">
+                        <span className="avatar-initial">
+                          {patientName.charAt(0).toUpperCase()}
+                        </span>
+                        <div>
+                          <strong className="patient-cell-name">{patientName}</strong>
+                          <span className="patient-lang-tag">
+                            {item.language || 'English'}
+                          </span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="cell-demographics">
+                      <span>
+                        {age ? `${age} yrs` : '—'} /{' '}
+                        {gender ? (t.details?.genderOptions?.[gender] || gender) : '—'}
+                      </span>
+                    </td>
+                    <td className="cell-complaint">
+                      <span className="complaint-highlight-pill">{complaint}</span>
+                    </td>
+                    <td className="cell-status">
+                      <div className="status-badges-group">
+                        {hasAlerts && (
+                          <StatusBadge
+                            type="danger"
+                            size="small"
+                            label={t.doctorDashboard.flaggedBadge || 'Flagged'}
+                          />
+                        )}
+                        {isAccepted ? (
+                          <StatusBadge
+                            type="success"
+                            label={t.doctorDashboard.statusAccepted}
+                          />
+                        ) : (
+                          <StatusBadge
+                            type="warning"
+                            label={t.doctorDashboard.statusReady}
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td className="cell-action text-right">
+                      <button
+                        type="button"
+                        className="primary-button view-case-action-btn touch-target"
+                        onClick={() => onOpenCase(caseId)}
+                      >
+                        <span>{t.doctorDashboard.viewCaseBtn}</span>
+                      </button>
+                    </td>
+                  </tr>
+                )
+              })
             )}
           </tbody>
         </table>

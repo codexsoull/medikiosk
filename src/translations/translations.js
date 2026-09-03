@@ -227,7 +227,10 @@ export const translations = {
       flaggedBadge: 'Flagged',
       viewCaseBtn: 'View Case →',
       emptyCases: 'No cases currently waiting for review.',
-      sharedDataNotice: 'Connected to Kiosk Case Pipeline • Live Shared State'
+      loadingCases: 'Loading patient cases from database...',
+      loadError: 'Unable to load patient cases. Please check the connection and try again.',
+      retryBtn: 'Retry',
+      sharedDataNotice: 'Connected to SQLite Case Pipeline • Live Database'
     },
     doctorCase: {
       title: 'Patient Summary',
@@ -503,7 +506,10 @@ export const translations = {
       flaggedBadge: 'चिह्नित',
       viewCaseBtn: 'केस देखें →',
       emptyCases: 'वर्तमान में समीक्षा के लिए कोई केस प्रतीक्षारत नहीं है।',
-      sharedDataNotice: 'कियोस्क केस पाइपलाइन से जुड़ा • लाइव साझा स्थिति'
+      loadingCases: 'डेटाबेस से मरीज़ों के केस लोड हो रहे हैं...',
+      loadError: 'मरीज़ों के केस लोड नहीं किए जा सके। कृपया कनेक्शन की जांच करें और पुनः प्रयास करें।',
+      retryBtn: 'पुनः प्रयास करें',
+      sharedDataNotice: 'SQLite केस पाइपलाइन से जुड़ा • लाइव डेटाबेस'
     },
     doctorCase: {
       title: 'मरीज़ का सारांश',

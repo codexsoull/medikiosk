@@ -2103,6 +2103,48 @@
   font-style: italic;
 }
 
+.table-loading-spinner-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 14px;
+  font-style: normal;
+  color: var(--text-secondary);
+}
+
+.table-loading-spinner-wrap .submit-spinner {
+  border: 2.5px solid var(--border);
+  border-top-color: var(--primary);
+  margin-right: 0;
+}
+
+.table-error-text {
+  color: var(--danger);
+  font-weight: 700;
+  font-style: normal;
+  margin-bottom: 12px;
+}
+
+.retry-load-btn {
+  padding: 6px 16px;
+  font-size: 13px;
+  margin: 0 auto;
+}
+
+.portal-header-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.refresh-cases-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 /* --------------------------------------------------------------------------
    Doctor Case View (Detailed Clinical Review)
    -------------------------------------------------------------------------- */

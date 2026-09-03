@@ -19,7 +19,7 @@ import {
   extractAnswersByIndex,
   extractRedFlagResponses
 } from './data/mockCase'
-import { createCase } from './api/cases'
+import { createCase, fetchCaseById, mapBackendCaseToFrontend } from './api/cases'
 import './App.css'
 
 function getInitialLanguage() {
@@ -54,6 +54,9 @@ export default function App() {
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submissionError, setSubmissionError] = useState('')
+
+  // Active Selected Case in Doctor Portal
+  const [selectedDoctorCase, setSelectedDoctorCase] = useState(null)
 
   // Master Shared Mock Case State
   const [caseData, setCaseData] = useState(() => ({
@@ -254,22 +257,60 @@ export default function App() {
   }
 
   const handleOpenDoctorDashboard = () => {
+    setSelectedDoctorCase(null)
     setScreen('doctor_dashboard')
   }
 
-  const handleOpenDoctorCase = () => {
+  const handleOpenDoctorCase = async (caseIdentifier) => {
+    if (caseIdentifier) {
+      try {
+        const response = await fetchCaseById(caseIdentifier)
+        if (response?.data) {
+          const mappedCase = mapBackendCaseToFrontend(response.data)
+          setSelectedDoctorCase(mappedCase)
+          setScreen('doctor_case')
+          return
+        }
+      } catch (err) {
+        console.error(`Failed to fetch complete case for ${caseIdentifier}:`, err)
+      }
+    }
+    // Fallback to active caseData if fetch fails
+    setSelectedDoctorCase(caseData)
     setScreen('doctor_case')
   }
 
   const handleDoctorAcceptSummary = () => {
+    const acceptedTimestamp = new Date().toISOString()
+    setSelectedDoctorCase((prev) =>
+      prev
+        ? {
+            ...prev,
+            status: 'physician_accepted',
+            acceptedTimestamp
+          }
+        : prev
+    )
     setCaseData((prev) => ({
       ...prev,
       status: 'physician_accepted',
-      acceptedTimestamp: new Date().toISOString()
+      acceptedTimestamp
     }))
   }
 
   const handleDoctorUpdateSummary = (updatedSummary) => {
+    setSelectedDoctorCase((prev) =>
+      prev
+        ? {
+            ...prev,
+            summary: {
+              ...prev.summary,
+              ...updatedSummary
+            },
+            physicianNotes: 'Edited by physician'
+          }
+        : prev
+    )
     setCaseData((prev) => ({
       ...prev,
       summary: {
@@ -291,6 +332,7 @@ export default function App() {
         language: language
       }
     })
+    setSelectedDoctorCase(null)
     setConversation([])
     setCurrentQuestionIndex(0)
     setIsInterviewFinished(false)
@@ -433,7 +475,6 @@ export default function App() {
         {/* Step 8: Doctor Dashboard */}
         {screen === 'doctor_dashboard' && (
           <DoctorDashboard
-            caseData={caseData}
             onOpenCase={handleOpenDoctorCase}
             onStartNewIntake={handleStartNewIntake}
             t={t}
@@ -443,10 +484,10 @@ export default function App() {
         {/* Step 9: Doctor Case Summary & Editing */}
         {screen === 'doctor_case' && (
           <DoctorCase
-            caseData={caseData}
+            caseData={selectedDoctorCase || caseData}
             onUpdateSummary={handleDoctorUpdateSummary}
             onAcceptCase={handleDoctorAcceptSummary}
-            onBackToDashboard={() => setScreen('doctor_dashboard')}
+            onBackToDashboard={handleOpenDoctorDashboard}
             t={t}
           />
         )}
