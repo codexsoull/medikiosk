@@ -280,44 +280,54 @@ export default function App() {
     setScreen('doctor_case')
   }
 
-  const handleDoctorAcceptSummary = () => {
+  const handleDoctorAcceptSummary = (updatedBackendData) => {
     const acceptedTimestamp = new Date().toISOString()
-    setSelectedDoctorCase((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: 'physician_accepted',
-            acceptedTimestamp
-          }
-        : prev
-    )
+    const mapped = updatedBackendData ? mapBackendCaseToFrontend(updatedBackendData) : null
+
+    setSelectedDoctorCase((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        status: 'physician_accepted',
+        case_status: 'accepted',
+        acceptedTimestamp,
+        ...(mapped || {})
+      }
+    })
     setCaseData((prev) => ({
       ...prev,
       status: 'physician_accepted',
-      acceptedTimestamp
+      case_status: 'accepted',
+      acceptedTimestamp,
+      ...(mapped || {})
     }))
   }
 
-  const handleDoctorUpdateSummary = (updatedSummary) => {
-    setSelectedDoctorCase((prev) =>
-      prev
-        ? {
-            ...prev,
-            summary: {
-              ...prev.summary,
-              ...updatedSummary
-            },
-            physicianNotes: 'Edited by physician'
-          }
-        : prev
-    )
+  const handleDoctorUpdateSummary = (updatedSummary, updatedBackendData) => {
+    const mapped = updatedBackendData ? mapBackendCaseToFrontend(updatedBackendData) : null
+
+    setSelectedDoctorCase((prev) => {
+      if (!prev) return prev
+      return {
+        ...prev,
+        summary: {
+          ...prev.summary,
+          ...updatedSummary
+        },
+        doctor_notes: mapped?.doctor_notes || prev.doctor_notes,
+        physicianNotes: mapped?.doctor_notes || prev.physicianNotes,
+        ...(mapped || {})
+      }
+    })
     setCaseData((prev) => ({
       ...prev,
       summary: {
         ...prev.summary,
         ...updatedSummary
       },
-      physicianNotes: 'Edited by physician'
+      doctor_notes: mapped?.doctor_notes || prev.doctor_notes,
+      physicianNotes: mapped?.doctor_notes || prev.physicianNotes,
+      ...(mapped || {})
     }))
   }
 

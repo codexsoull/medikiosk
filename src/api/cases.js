@@ -61,6 +61,35 @@ export async function fetchCaseById(id) {
 }
 
 /**
+ * Updates doctor_notes and/or case_status for a case via PATCH /api/cases/:id
+ * @param {string|number} id - Case identifier
+ * @param {Object} updates - { doctor_notes, case_status }
+ * @returns {Promise<Object>} API response with updated case record
+ */
+export async function updateCase(id, updates) {
+  const response = await fetch(`${API_BASE_URL}/api/cases/${id}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(updates)
+  })
+
+  let data
+  try {
+    data = await response.json()
+  } catch {
+    throw new Error(`Server returned status ${response.status}`)
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.message || `Failed to update case (HTTP ${response.status})`)
+  }
+
+  return data
+}
+
+/**
  * Maps raw backend case record to the frontend state format
  * @param {Object} row - SQLite case record
  * @returns {Object} Normalized caseData structure
@@ -106,7 +135,9 @@ export function mapBackendCaseToFrontend(row) {
   return {
     id: row.id,
     caseId: row.case_id || `CASE-${row.id}`,
-    status: row.case_status || 'ready_for_doctor',
+    case_id: row.case_id || `CASE-${row.id}`,
+    status: row.case_status === 'accepted' || row.case_status === 'physician_accepted' ? 'physician_accepted' : (row.case_status || 'ready_for_doctor'),
+    case_status: row.case_status || 'ready_for_doctor',
     intakeTimestamp: row.created_at || new Date().toISOString(),
     patient: {
       name: row.patient_name || 'Walk-in Patient',
@@ -138,6 +169,7 @@ export function mapBackendCaseToFrontend(row) {
     },
     clinicalAlerts: clinicalAlerts,
     documents: [],
+    doctor_notes: row.doctor_notes || '',
     physicianNotes: row.doctor_notes || ''
   }
 }

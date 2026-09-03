@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import ClinicalSection from '../components/ClinicalSection'
 import StatusBadge from '../components/StatusBadge'
+import { updateCase } from '../api/cases'
 
 // SVG file icon for records panel
 const FileIcon = () => (
@@ -19,10 +20,19 @@ export default function DoctorCase({
 }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedFields, setEditedFields] = useState({ ...caseData.summary })
-  const [hasPhysicianEdited, setHasPhysicianEdited] = useState(Boolean(caseData.physicianNotes))
+  const [doctorNotes, setDoctorNotes] = useState(caseData.doctor_notes || caseData.physicianNotes || '')
+  const [editedNotes, setEditedNotes] = useState(caseData.doctor_notes || caseData.physicianNotes || '')
+  const [hasPhysicianEdited, setHasPhysicianEdited] = useState(Boolean(caseData.doctor_notes || caseData.physicianNotes))
   const [consultationToast, setConsultationToast] = useState(false)
+  const [saveSuccessToast, setSaveSuccessToast] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
-  const isAccepted = caseData.status === 'physician_accepted'
+  const isAccepted =
+    caseData.status === 'physician_accepted' ||
+    caseData.status === 'accepted' ||
+    caseData.case_status === 'accepted'
+
   const patient = caseData.patient || {}
   const summary = isEditing ? editedFields : (caseData.summary || {})
   const docs = caseData.documents || []
@@ -38,22 +48,66 @@ export default function DoctorCase({
 
   const handleStartEdit = () => {
     setEditedFields({ ...caseData.summary })
+    setEditedNotes(doctorNotes)
+    setSaveError('')
     setIsEditing(true)
   }
 
   const handleCancelEdit = () => {
     setEditedFields({ ...caseData.summary })
+    setEditedNotes(doctorNotes)
+    setSaveError('')
     setIsEditing(false)
   }
 
-  const handleSaveEdit = () => {
-    onUpdateSummary(editedFields)
-    setIsEditing(false)
-    setHasPhysicianEdited(true)
+  const handleSaveEdit = async () => {
+    setIsSaving(true)
+    setSaveError('')
+    const caseId = caseData.case_id || caseData.caseId || caseData.id
+    try {
+      const response = await updateCase(caseId, {
+        doctor_notes: editedNotes
+      })
+      setDoctorNotes(editedNotes)
+      setIsEditing(false)
+      setHasPhysicianEdited(true)
+      setSaveSuccessToast(true)
+      setTimeout(() => setSaveSuccessToast(false), 4000)
+      if (onUpdateSummary) {
+        onUpdateSummary(editedFields, response?.data)
+      }
+    } catch (err) {
+      console.error('Failed to save doctor notes/summary:', err)
+      setSaveError(err.message || t.doctorCase.updateError || 'Unable to update case in database. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  const handleAccept = () => {
-    onAcceptCase()
+  const handleAccept = async () => {
+    setIsSaving(true)
+    setSaveError('')
+    const caseId = caseData.case_id || caseData.caseId || caseData.id
+    try {
+      const response = await updateCase(caseId, {
+        case_status: 'accepted',
+        doctor_notes: isEditing ? editedNotes : doctorNotes
+      })
+      if (isEditing) {
+        setDoctorNotes(editedNotes)
+        setIsEditing(false)
+      }
+      setSaveSuccessToast(true)
+      setTimeout(() => setSaveSuccessToast(false), 4000)
+      if (onAcceptCase) {
+        onAcceptCase(response?.data)
+      }
+    } catch (err) {
+      console.error('Failed to accept case in database:', err)
+      setSaveError(err.message || t.doctorCase.updateError || 'Unable to update case in database. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleStartConsultation = () => {
@@ -77,7 +131,7 @@ export default function DoctorCase({
         </button>
 
         <div className="case-id-status-group">
-          <span className="case-id-tag">{caseData.caseId || 'CASE-2026-0001'}</span>
+          <span className="case-id-tag">{caseData.caseId || caseData.case_id || 'CASE-2026-0001'}</span>
           {isAccepted ? (
             <StatusBadge
               type="success"
@@ -96,6 +150,21 @@ export default function DoctorCase({
           )}
         </div>
       </div>
+
+      {/* Inline Save Error Banner */}
+      {saveError && (
+        <div className="submit-error-banner" role="alert" style={{ margin: '8px 0 16px' }}>
+          <span>⚠️ {saveError}</span>
+          <button
+            type="button"
+            className="clear-search-btn"
+            onClick={() => setSaveError('')}
+            aria-label="Dismiss error"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* AI Draft Disclaimer Banner */}
       <div className="ai-draft-alert-banner">
@@ -128,7 +197,7 @@ export default function DoctorCase({
             </div>
             <div className="demographic-item-pill">
               <span className="demographic-key">{t.doctorCase.caseIdLabel}</span>
-              <strong className="demographic-val">{caseData.caseId || 'CASE-2026-0001'}</strong>
+              <strong className="demographic-val">{caseData.caseId || caseData.case_id || 'CASE-2026-0001'}</strong>
             </div>
           </div>
         </div>
@@ -271,6 +340,20 @@ export default function DoctorCase({
           isTextarea={true}
           rows={2}
         />
+
+        {/* Doctor Notes & Clinical Impression */}
+        <ClinicalSection
+          title={t.doctorCase.doctorNotes || 'DOCTOR NOTES / CLINICAL IMPRESSION'}
+          value={isEditing ? editedNotes : doctorNotes}
+          fieldKey="doctorNotes"
+          isEditing={isEditing}
+          onChange={(key, val) => setEditedNotes(val)}
+          isTextarea={true}
+          rows={3}
+          placeholder={t.doctorCase.doctorNotesPlaceholder || 'Enter clinical impression, recommendations, or consultation notes...'}
+          emptyFallback="No physician notes recorded yet. Tap 'Edit Summary' to add clinical notes."
+          highlight={Boolean(doctorNotes || editedNotes)}
+        />
       </div>
 
       {/* Previous Medical Records */}
@@ -317,10 +400,17 @@ export default function DoctorCase({
         </div>
       )}
 
-      {/* Toast feedback for Consultation */}
+      {/* Toast feedback for Consultation Placeholder */}
       {consultationToast && (
         <div className="consultation-toast" role="alert">
           <span>{t.doctorCase.consultationPlaceholderToast}</span>
+        </div>
+      )}
+
+      {/* Toast feedback for Case Updated in DB */}
+      {saveSuccessToast && (
+        <div className="consultation-toast success-toast" role="status">
+          <span>✓ {t.doctorCase.updateSuccess || 'Case updated successfully in database.'}</span>
         </div>
       )}
 
@@ -332,6 +422,7 @@ export default function DoctorCase({
               type="button"
               className="secondary-button cancel-edit-btn"
               onClick={handleCancelEdit}
+              disabled={isSaving}
             >
               {t.doctorCase.cancelEditingBtn}
             </button>
@@ -339,9 +430,10 @@ export default function DoctorCase({
               type="button"
               className="primary-button save-edit-btn"
               onClick={handleSaveEdit}
+              disabled={isSaving}
             >
-              <span>{t.doctorCase.saveChangesBtn}</span>
-              <span className="arrow-icon" aria-hidden="true">✓</span>
+              <span>{isSaving ? (t.doctorCase.saving || 'Saving...') : t.doctorCase.saveChangesBtn}</span>
+              <span className="arrow-icon" aria-hidden="true">{isSaving ? '⏳' : '✓'}</span>
             </button>
           </div>
         ) : (
@@ -350,6 +442,7 @@ export default function DoctorCase({
               type="button"
               className="secondary-button edit-summary-toggle-btn"
               onClick={handleStartEdit}
+              disabled={isSaving}
             >
               {t.doctorCase.editSummaryBtn}
             </button>
@@ -359,9 +452,10 @@ export default function DoctorCase({
                 type="button"
                 className="primary-button accept-summary-btn"
                 onClick={handleAccept}
+                disabled={isSaving}
               >
-                <span>{t.doctorCase.acceptSummaryBtn}</span>
-                <span className="arrow-icon" aria-hidden="true">✓</span>
+                <span>{isSaving ? (t.doctorCase.saving || 'Saving...') : t.doctorCase.acceptSummaryBtn}</span>
+                <span className="arrow-icon" aria-hidden="true">{isSaving ? '⏳' : '✓'}</span>
               </button>
             ) : (
               <button

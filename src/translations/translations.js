@@ -274,7 +274,12 @@ export const translations = {
       startConsultationBtn: 'Start Consultation',
       consultationPlaceholderToast: 'Consultation workflow placeholder. Connecting to Hospital Information System (HIS/EMR).',
       backToDashboardBtn: '← Back to Case Queue',
-      updatedByPhysician: 'Updated by physician'
+      updatedByPhysician: 'Updated by physician',
+      doctorNotes: 'DOCTOR NOTES / CLINICAL IMPRESSION',
+      doctorNotesPlaceholder: 'Enter clinical impression, recommendations, or consultation notes...',
+      updateSuccess: 'Case updated successfully in database.',
+      updateError: 'Unable to update case in database. Please try again.',
+      saving: 'Saving...'
     }
   },
 
@@ -553,7 +558,12 @@ export const translations = {
       startConsultationBtn: 'परामर्श शुरू करें',
       consultationPlaceholderToast: 'परामर्श वर्कफ़्लो प्लेसहोल्डर। अस्पताल सूचना प्रणाली (HIS/EMR) से जुड़ रहा है।',
       backToDashboardBtn: '← केस कतार पर वापस जाएं',
-      updatedByPhysician: 'चिकित्सक द्वारा अद्यतित'
+      updatedByPhysician: 'चिकित्सक द्वारा अद्यतित',
+      doctorNotes: 'चिकित्सक नोट्स / नैदानिक विचार',
+      doctorNotesPlaceholder: 'चिकित्सक नोट्स, नैदानिक विचार या परामर्श टिप्पणियां दर्ज करें...',
+      updateSuccess: 'केस सफलतापूर्वक डेटाबेस में अद्यतित किया गया।',
+      updateError: 'डेटाबेस में केस अद्यतित नहीं किया जा सका। कृपया पुनः प्रयास करें।',
+      saving: 'सहेज रहा है...'
     }
   }
 }

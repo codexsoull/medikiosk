@@ -2669,6 +2669,12 @@
   font-weight: 700;
 }
 
+.consultation-toast.success-toast {
+  background-color: var(--success-light);
+  border-color: var(--success);
+  color: var(--success);
+}
+
 .physician-bottom-action-bar {
   border-top: 1px solid var(--border);
   padding-top: 20px;

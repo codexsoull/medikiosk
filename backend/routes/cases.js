@@ -225,5 +225,91 @@ router.get('/cases/:id', (req, res) => {
   }
 })
 
+/**
+ * PATCH /api/cases/:id
+ * Update doctor_notes and/or case_status for a specific case
+ */
+router.patch('/cases/:id', (req, res) => {
+  try {
+    const param = req.params.id
+    const body = req.body || {}
+
+    // Check if case exists
+    const existingCase = db
+      .prepare('SELECT * FROM cases WHERE id = ? OR case_id = ?')
+      .get(param, param)
+
+    if (!existingCase) {
+      return res.status(404).json({
+        status: 'error',
+        message: `Case not found with identifier: ${param}`
+      })
+    }
+
+    const hasNotes = body.doctor_notes !== undefined
+    const hasStatus = body.case_status !== undefined
+
+    // Validate that at least one update field was provided
+    if (!hasNotes && !hasStatus) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'At least one of doctor_notes or case_status must be provided'
+      })
+    }
+
+    // Validate doctor_notes if provided
+    if (hasNotes && typeof body.doctor_notes !== 'string' && body.doctor_notes !== null) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'doctor_notes must be a string or null'
+      })
+    }
+
+    // Validate case_status if provided
+    const validStatuses = ['ready_for_doctor', 'accepted', 'physician_accepted']
+    if (hasStatus && !validStatuses.includes(body.case_status)) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Invalid case_status: "${body.case_status}". Supported statuses are: ready_for_doctor, accepted`
+      })
+    }
+
+    const updates = []
+    const params = []
+
+    if (hasNotes) {
+      updates.push('doctor_notes = ?')
+      params.push(body.doctor_notes)
+    }
+
+    if (hasStatus) {
+      const normalizedStatus = body.case_status === 'physician_accepted' ? 'accepted' : body.case_status
+      updates.push('case_status = ?')
+      params.push(normalizedStatus)
+    }
+
+    updates.push("updated_at = datetime('now', 'localtime')")
+    params.push(existingCase.id)
+
+    const updateSql = `UPDATE cases SET ${updates.join(', ')} WHERE id = ?`
+    db.prepare(updateSql).run(...params)
+
+    const updatedRow = db.prepare('SELECT * FROM cases WHERE id = ?').get(existingCase.id)
+
+    return res.status(200).json({
+      status: 'success',
+      message: 'Case updated successfully',
+      data: formatCaseRow(updatedRow)
+    })
+  } catch (error) {
+    console.error('Error updating case in database:', error)
+    return res.status(500).json({
+      status: 'error',
+      message: 'Internal server error updating case',
+      error: error.message
+    })
+  }
+})
+
 export default router
 
