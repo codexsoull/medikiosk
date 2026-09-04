@@ -29,7 +29,9 @@ export const translations = {
         4: 'History',
         5: 'Documents',
         6: 'Review'
-      }
+      },
+      readAloud: 'Read Aloud',
+      stopSpeaking: 'Stop'
     },
     welcome: {
       brand: 'MEDIKIOSK',
@@ -313,7 +315,9 @@ export const translations = {
         4: 'इतिहास',
         5: 'दस्तावेज़',
         6: 'समीक्षा'
-      }
+      },
+      readAloud: 'पढ़कर सुनाएं',
+      stopSpeaking: 'रोकें'
     },
     welcome: {
       brand: 'MEDIKIOSK',

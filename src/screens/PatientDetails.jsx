@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import ProgressBar from '../components/ProgressBar'
+import ReadAloud from '../components/ReadAloud'
 
 export default function PatientDetails({
   patientData,
   onUpdatePatient,
   onContinue,
   onBack,
+  language = 'English',
   t
 }) {
   const [errors, setErrors] = useState({})
@@ -116,6 +118,13 @@ export default function PatientDetails({
       <div className="page-header">
         <h1 className="screen-title">{t.details.title}</h1>
         <p className="screen-subtitle">{t.details.subtitle}</p>
+        <div className="read-aloud-container">
+          <ReadAloud
+            text={`${t.details.title}. ${t.details.subtitle}`}
+            language={language}
+            t={t}
+          />
+        </div>
       </div>
 
       <form className="form details-form" onSubmit={handleSubmit} noValidate>

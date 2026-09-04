@@ -57,3 +57,13 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# =========================
+# SQLite Database Files
+# =========================
+*.db
+*.db-shm
+*.db-wal
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal

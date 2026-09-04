@@ -1,5 +1,6 @@
 import React, { useRef } from 'react'
 import ProgressBar from '../components/ProgressBar'
+import ReadAloud from '../components/ReadAloud'
 
 // SVG upload icon
 const UploadIcon = () => (
@@ -45,6 +46,7 @@ export default function DocumentUpload({
   onContinue,
   onSkip,
   onBack,
+  language = 'English',
   t
 }) {
   const fileInputRef = useRef(null)
@@ -129,6 +131,13 @@ export default function DocumentUpload({
       <div className="page-header">
         <h1 className="screen-title">{t.upload.title}</h1>
         <p className="screen-subtitle">{t.upload.subtitle}</p>
+        <div className="read-aloud-container">
+          <ReadAloud
+            text={`${t.upload.title}. ${t.upload.subtitle}. ${t.upload.dropzoneHeading}`}
+            language={language}
+            t={t}
+          />
+        </div>
       </div>
 
       {/* Touch-Friendly Dropzone */}

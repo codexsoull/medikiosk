@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import StatusBadge from '../components/StatusBadge'
+import ReadAloud from '../components/ReadAloud'
 
 export default function IdentityVerification({
   caseData,
   onUpdateCase,
   onContinueToOtp,
   onBack,
+  language = 'English',
   t
 }) {
   const [selectedMethod, setSelectedMethod] = useState(caseData.authentication?.method || 'mock-aadhaar')
@@ -56,6 +58,13 @@ export default function IdentityVerification({
       <div className="page-header">
         <h1 className="screen-title">{t.identity.title}</h1>
         <p className="screen-subtitle">{t.identity.subtitle}</p>
+        <div className="read-aloud-container">
+          <ReadAloud
+            text={`${t.identity.title}. ${t.identity.subtitle}. ${t.identity.methodLabel}`}
+            language={language}
+            t={t}
+          />
+        </div>
       </div>
 
       <div className="demo-notice-box">

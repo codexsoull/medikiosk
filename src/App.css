@@ -3164,3 +3164,91 @@
     padding: 24px 12px !important;
   }
 }
+
+/* ==========================================================================
+   Read Aloud / Text-to-Speech Accessibility Button
+   ========================================================================== */
+.read-aloud-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 10px 0 4px;
+}
+
+.read-aloud-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background-color: var(--surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+  line-height: 1;
+}
+
+.read-aloud-btn:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.read-aloud-btn:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.read-aloud-btn.is-speaking {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border-color: var(--primary);
+  font-weight: 800;
+  box-shadow: 0 0 0 3px rgba(23, 107, 80, 0.15);
+}
+
+.read-aloud-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.read-aloud-label {
+  letter-spacing: 0.2px;
+}
+
+/* Subtle audio wave animation when actively speaking */
+.read-aloud-wave {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 12px;
+  margin-left: 2px;
+}
+
+.read-aloud-wave span {
+  display: inline-block;
+  width: 2.5px;
+  height: 100%;
+  background-color: var(--primary);
+  border-radius: 2px;
+  animation: readAloudPulse 0.8s ease-in-out infinite alternate;
+}
+
+.read-aloud-wave span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.read-aloud-wave span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes readAloudPulse {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}

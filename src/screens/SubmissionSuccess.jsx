@@ -1,9 +1,11 @@
 import React from 'react'
+import ReadAloud from '../components/ReadAloud'
 
 export default function SubmissionSuccess({
   caseData,
   onGoToDoctorDashboard,
   onStartNewIntake,
+  language = 'English',
   t
 }) {
   return (
@@ -17,6 +19,13 @@ export default function SubmissionSuccess({
 
         <h1 className="success-title">{t.success.title}</h1>
         <p className="success-subtitle">{t.success.subtitle}</p>
+        <div className="read-aloud-container">
+          <ReadAloud
+            text={`${t.success.title}. ${t.success.subtitle}. ${t.success.readyNotice}`}
+            language={language}
+            t={t}
+          />
+        </div>
 
         {/* Case Token Summary Card */}
         <div className="case-token-card">

@@ -1,7 +1,10 @@
 import React from 'react'
 import Logo from '../components/Logo'
+import ReadAloud from '../components/ReadAloud'
 
 export default function Welcome({ language, onSelectLanguage, onStart, t }) {
+  const welcomeSpeech = `${t.welcome.heading}. ${t.welcome.subheading}`
+
   return (
     <div className="kiosk-container welcome-card" role="main">
       <div className="welcome-hero-content">
@@ -15,6 +18,9 @@ export default function Welcome({ language, onSelectLanguage, onStart, t }) {
         <div className="welcome-messaging-block">
           <h2 className="welcome-heading">{t.welcome.heading}</h2>
           <p className="welcome-subheading">{t.welcome.subheading}</p>
+          <div className="read-aloud-container">
+            <ReadAloud text={welcomeSpeech} language={language} t={t} />
+          </div>
         </div>
 
         {/* Primary Action Button */}

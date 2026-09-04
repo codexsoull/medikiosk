@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import ChatBubble from '../components/ChatBubble'
+import ReadAloud from '../components/ReadAloud'
 import { detectRedFlagTrigger } from '../data/redFlags'
 
 // SVG mic icon — no emoji
@@ -189,6 +190,12 @@ export default function Interview({
     ? t.interview.quickSuggestions[currentQuestionIndex]
     : []
 
+  const activeAiSpeechText =
+    (conversation.length > 0 &&
+      [...conversation].reverse().find((m) => m.sender === 'ai')?.text) ||
+    t.interview.questions[currentQuestionIndex] ||
+    t.interview.title
+
   return (
     <div className="kiosk-container interview-card" role="main">
       <div className="card-top-nav">
@@ -207,6 +214,13 @@ export default function Interview({
       <div className="page-header interview-page-header">
         <h1 className="screen-title">{t.interview.title}</h1>
         <p className="screen-subtitle">{t.interview.subtitle}</p>
+        <div className="read-aloud-container">
+          <ReadAloud
+            text={activeAiSpeechText}
+            language={language}
+            t={t}
+          />
+        </div>
       </div>
 
       {/* Conversational Chat Viewport */}

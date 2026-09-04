@@ -1,9 +1,12 @@
 import React, { useState } from 'react'
 import ProgressBar from '../components/ProgressBar'
+import ReadAloud from '../components/ReadAloud'
 
-export default function Consent({ caseData, onUpdateCase, onContinue, onBack, t }) {
+export default function Consent({ caseData, onUpdateCase, onContinue, onBack, language = 'English', t }) {
   const [consentChecked, setConsentChecked] = useState(Boolean(caseData.consent?.given))
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
+
+  const consentSpeech = `${t.consent.title}. ${t.consent.subtitle}. ${t.consent.noticeText} ${t.consent.purposeText}`
 
   const handleCheckboxToggle = (e) => {
     const checked = e.target.checked
@@ -40,6 +43,9 @@ export default function Consent({ caseData, onUpdateCase, onContinue, onBack, t 
       <div className="page-header">
         <h1 className="screen-title">{t.consent.title}</h1>
         <p className="screen-subtitle">{t.consent.subtitle}</p>
+        <div className="read-aloud-container">
+          <ReadAloud text={consentSpeech} language={language} t={t} />
+        </div>
       </div>
 
       <div className="consent-content-box">

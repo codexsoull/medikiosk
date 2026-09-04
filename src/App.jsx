@@ -382,6 +382,7 @@ export default function App() {
             onUpdateCase={setCaseData}
             onContinue={handleConsentContinue}
             onBack={() => setScreen('welcome')}
+            language={language}
             t={t}
           />
         )}
@@ -393,6 +394,7 @@ export default function App() {
             onUpdateCase={setCaseData}
             onContinueToOtp={handleIdentityContinue}
             onBack={() => setScreen('consent')}
+            language={language}
             t={t}
           />
         )}
@@ -403,6 +405,7 @@ export default function App() {
             onUpdateCase={setCaseData}
             onContinueToDetails={handleOtpVerified}
             onBack={() => setScreen('identity')}
+            language={language}
             t={t}
           />
         )}
@@ -416,6 +419,7 @@ export default function App() {
             }
             onContinue={handleDetailsContinue}
             onBack={() => setScreen('otp')}
+            language={language}
             t={t}
           />
         )}
@@ -447,6 +451,7 @@ export default function App() {
             onContinue={handleUploadContinue}
             onSkip={handleUploadContinue}
             onBack={() => setScreen('interview')}
+            language={language}
             t={t}
           />
         )}
@@ -468,6 +473,7 @@ export default function App() {
             onBack={() => setScreen('upload')}
             isSubmitting={isSubmitting}
             errorMessage={submissionError}
+            language={language}
             t={t}
           />
         )}
@@ -478,6 +484,7 @@ export default function App() {
             caseData={caseData}
             onGoToDoctorDashboard={handleOpenDoctorDashboard}
             onStartNewIntake={handleStartNewIntake}
+            language={language}
             t={t}
           />
         )}
