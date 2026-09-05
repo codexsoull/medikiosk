@@ -18,9 +18,6 @@ export default function Welcome({ language, onSelectLanguage, onStart, t }) {
         <div className="welcome-messaging-block">
           <h2 className="welcome-heading">{t.welcome.heading}</h2>
           <p className="welcome-subheading">{t.welcome.subheading}</p>
-          <div className="read-aloud-container">
-            <ReadAloud text={welcomeSpeech} language={language} t={t} />
-          </div>
         </div>
 
         {/* Primary Action Button */}
@@ -71,6 +68,15 @@ export default function Welcome({ language, onSelectLanguage, onStart, t }) {
         <div className="welcome-trust-statement">
           <span>{t.welcome.trustStatement}</span>
         </div>
+
+        {/* Persistent Floating Read Aloud Button */}
+        <ReadAloud
+          text={welcomeSpeech}
+          language={language}
+          t={t}
+          floating={true}
+          variant="floating"
+        />
       </div>
     </div>
   )

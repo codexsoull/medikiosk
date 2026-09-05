@@ -131,13 +131,6 @@ export default function DocumentUpload({
       <div className="page-header">
         <h1 className="screen-title">{t.upload.title}</h1>
         <p className="screen-subtitle">{t.upload.subtitle}</p>
-        <div className="read-aloud-container">
-          <ReadAloud
-            text={`${t.upload.title}. ${t.upload.subtitle}. ${t.upload.dropzoneHeading}`}
-            language={language}
-            t={t}
-          />
-        </div>
       </div>
 
       {/* Touch-Friendly Dropzone */}
@@ -296,6 +289,15 @@ export default function DocumentUpload({
           </button>
         )}
       </div>
+
+      {/* Persistent Floating Read Aloud Button */}
+      <ReadAloud
+        text={`${t.upload.title}. ${t.upload.subtitle}. ${t.upload.dropzoneHeading}`}
+        language={language}
+        t={t}
+        floating={true}
+        variant="floating"
+      />
     </div>
   )
 }

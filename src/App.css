@@ -1166,8 +1166,17 @@
 .chat-sender-name-group {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  width: 100%;
+}
+
+.chat-sender-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .chat-sender-name {
@@ -3166,7 +3175,7 @@
 }
 
 /* ==========================================================================
-   Read Aloud / Text-to-Speech Accessibility Button
+   Read Aloud / Text-to-Speech Accessibility System
    ========================================================================== */
 .read-aloud-container {
   display: flex;
@@ -3175,6 +3184,7 @@
   margin: 10px 0 4px;
 }
 
+/* Base Read Aloud Button */
 .read-aloud-btn {
   display: inline-flex;
   align-items: center;
@@ -3222,12 +3232,157 @@
   letter-spacing: 0.2px;
 }
 
+/* --------------------------------------------------------------------------
+   Compact Inline Read Aloud Button (Chat Bubbles)
+   -------------------------------------------------------------------------- */
+.read-aloud-btn.read-aloud-compact {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 5px;
+  background-color: var(--surface-secondary);
+  color: var(--primary);
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.read-aloud-btn.read-aloud-compact:hover {
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-hover);
+}
+
+.read-aloud-btn.read-aloud-compact:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.read-aloud-btn.read-aloud-compact.is-speaking {
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-focus-ring);
+}
+
+.read-aloud-btn.read-aloud-compact.auto-read-active {
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary-hover);
+}
+
+.read-aloud-btn.read-aloud-compact.auto-read-active.is-speaking {
+  background-color: var(--primary);
+  color: #FFFFFF;
+}
+
+.read-aloud-btn.read-aloud-compact.is-speaking .read-aloud-wave span {
+  background-color: #FFFFFF;
+}
+
+/* Follow-up bubble contextual styling */
+.followup-bubble .read-aloud-btn.read-aloud-compact {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  border-color: rgba(183, 121, 31, 0.35);
+}
+
+.followup-bubble .read-aloud-btn.read-aloud-compact:hover {
+  background-color: var(--surface-secondary);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.followup-bubble .read-aloud-btn.read-aloud-compact.is-speaking {
+  background-color: var(--warning);
+  color: #FFFFFF;
+  border-color: var(--warning);
+  box-shadow: 0 0 0 3px rgba(183, 121, 31, 0.25);
+}
+
+/* --------------------------------------------------------------------------
+   Persistent Floating Read Aloud Button (General Patient Screens)
+   -------------------------------------------------------------------------- */
+.read-aloud-floating-wrap {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  right: calc(24px + env(safe-area-inset-right, 0px));
+  z-index: 990;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.read-aloud-btn.read-aloud-floating {
+  min-height: 52px;
+  min-width: 52px;
+  padding: 12px 22px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 9999px;
+  background-color: var(--surface);
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08);
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.read-aloud-btn.read-aloud-floating .read-aloud-icon {
+  font-size: 17px;
+}
+
+.read-aloud-btn.read-aloud-floating:hover {
+  background-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18), 0 3px 8px rgba(0, 0, 0, 0.1);
+}
+
+.read-aloud-btn.read-aloud-floating:active {
+  transform: translateY(0);
+}
+
+.read-aloud-btn.read-aloud-floating:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+.read-aloud-btn.read-aloud-floating.is-speaking {
+  background-color: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+  font-weight: 800;
+  box-shadow: 0 0 0 4px var(--primary-focus-ring), 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.read-aloud-btn.read-aloud-floating.is-speaking .read-aloud-wave span {
+  background-color: #FFFFFF;
+}
+
+/* Dark Mode Elevation for Floating Button */
+[data-theme="dark"] .read-aloud-btn.read-aloud-floating {
+  background-color: var(--surface);
+  color: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .read-aloud-btn.read-aloud-floating:hover {
+  background-color: var(--primary-light);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
 /* Subtle audio wave animation when actively speaking */
 .read-aloud-wave {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  height: 12px;
+  gap: 2.5px;
+  height: 14px;
   margin-left: 2px;
 }
 
@@ -3251,4 +3406,45 @@
 @keyframes readAloudPulse {
   0% { transform: scaleY(0.3); }
   100% { transform: scaleY(1); }
+}
+
+/* --------------------------------------------------------------------------
+   Scroll & Kiosk Bottom Clearances for Floating FAB
+   Ensures floating action button never obscures Continue, Submit, or Back
+   -------------------------------------------------------------------------- */
+.welcome-card,
+.consent-card,
+.identity-card,
+.otp-card,
+.details-card,
+.upload-card,
+.review-card,
+.success-card {
+  padding-bottom: 84px;
+}
+
+@media (max-width: 640px) {
+  .read-aloud-floating-wrap {
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    right: calc(16px + env(safe-area-inset-right, 0px));
+  }
+
+  .read-aloud-btn.read-aloud-floating {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 10px 16px;
+    font-size: 14px;
+    gap: 8px;
+  }
+
+  .welcome-card,
+  .consent-card,
+  .identity-card,
+  .otp-card,
+  .details-card,
+  .upload-card,
+  .review-card,
+  .success-card {
+    padding-bottom: 96px;
+  }
 }

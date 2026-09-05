@@ -43,9 +43,6 @@ export default function Consent({ caseData, onUpdateCase, onContinue, onBack, la
       <div className="page-header">
         <h1 className="screen-title">{t.consent.title}</h1>
         <p className="screen-subtitle">{t.consent.subtitle}</p>
-        <div className="read-aloud-container">
-          <ReadAloud text={consentSpeech} language={language} t={t} />
-        </div>
       </div>
 
       <div className="consent-content-box">
@@ -155,6 +152,15 @@ export default function Consent({ caseData, onUpdateCase, onContinue, onBack, la
           </div>
         </div>
       )}
+
+      {/* Persistent Floating Read Aloud Button */}
+      <ReadAloud
+        text={consentSpeech}
+        language={language}
+        t={t}
+        floating={true}
+        variant="floating"
+      />
     </div>
   )
 }

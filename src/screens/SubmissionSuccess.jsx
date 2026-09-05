@@ -19,13 +19,6 @@ export default function SubmissionSuccess({
 
         <h1 className="success-title">{t.success.title}</h1>
         <p className="success-subtitle">{t.success.subtitle}</p>
-        <div className="read-aloud-container">
-          <ReadAloud
-            text={`${t.success.title}. ${t.success.subtitle}. ${t.success.readyNotice}`}
-            language={language}
-            t={t}
-          />
-        </div>
 
         {/* Case Token Summary Card */}
         <div className="case-token-card">
@@ -63,6 +56,15 @@ export default function SubmissionSuccess({
             {t.success.newIntakeBtn}
           </button>
         </div>
+
+        {/* Persistent Floating Read Aloud Button */}
+        <ReadAloud
+          text={`${t.success.title}. ${t.success.subtitle}. ${t.success.readyNotice}`}
+          language={language}
+          t={t}
+          floating={true}
+          variant="floating"
+        />
       </div>
     </div>
   )

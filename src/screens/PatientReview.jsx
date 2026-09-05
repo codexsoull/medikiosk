@@ -36,13 +36,6 @@ export default function PatientReview({
       <div className="page-header">
         <h1 className="screen-title">{t.review.title}</h1>
         <p className="screen-subtitle">{t.review.subtitle}</p>
-        <div className="read-aloud-container">
-          <ReadAloud
-            text={`${t.review.title}. ${t.review.subtitle}`}
-            language={language}
-            t={t}
-          />
-        </div>
       </div>
 
       <div className="review-sections-list">
@@ -234,6 +227,15 @@ export default function PatientReview({
           )}
         </button>
       </div>
+
+      {/* Persistent Floating Read Aloud Button */}
+      <ReadAloud
+        text={`${t.review.title}. ${t.review.subtitle}`}
+        language={language}
+        t={t}
+        floating={true}
+        variant="floating"
+      />
     </div>
   )
 }

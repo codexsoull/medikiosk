@@ -1,7 +1,16 @@
 import React from 'react'
 import { getTriggerByKey } from '../data/redFlags'
+import ReadAloud from './ReadAloud'
 
-export default function ChatBubble({ message, t, language }) {
+export default function ChatBubble({
+  message,
+  t,
+  language,
+  autoRead = false,
+  isLatestAi = false,
+  isSpeakingCurrent = false,
+  onToggleAutoRead
+}) {
   const isAi = message.sender === 'ai'
   const isFollowUp = message.type === 'followup'
 
@@ -48,11 +57,27 @@ export default function ChatBubble({ message, t, language }) {
 
       <div className={`chat-bubble ${isAi ? 'ai-bubble' : 'patient-bubble'} ${isFollowUp ? 'followup-bubble' : ''}`}>
         <div className="chat-sender-name-group">
-          <span className="chat-sender-name">{senderName}</span>
-          {isFollowUp && (
-            <span className="chat-followup-tag">
-              {t?.interview?.followUpTag || 'Follow-up'}
-            </span>
+          <div className="chat-sender-left">
+            <span className="chat-sender-name">{senderName}</span>
+            {isFollowUp && (
+              <span className="chat-followup-tag">
+                {t?.interview?.followUpTag || 'Follow-up'}
+              </span>
+            )}
+          </div>
+          {isAi && displayText && (
+            <ReadAloud
+              text={displayText}
+              language={activeLang}
+              t={t}
+              variant="compact"
+              compact={true}
+              autoRead={autoRead}
+              isLatestAi={isLatestAi}
+              controlledSpeaking={isLatestAi ? isSpeakingCurrent : undefined}
+              onToggleAutoRead={onToggleAutoRead ? () => onToggleAutoRead(message.id, displayText) : undefined}
+              className="chat-bubble-read-aloud"
+            />
           )}
         </div>
         <div className="chat-text">{displayText}</div>
@@ -61,3 +86,4 @@ export default function ChatBubble({ message, t, language }) {
     </div>
   )
 }
+

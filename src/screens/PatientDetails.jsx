@@ -118,13 +118,6 @@ export default function PatientDetails({
       <div className="page-header">
         <h1 className="screen-title">{t.details.title}</h1>
         <p className="screen-subtitle">{t.details.subtitle}</p>
-        <div className="read-aloud-container">
-          <ReadAloud
-            text={`${t.details.title}. ${t.details.subtitle}`}
-            language={language}
-            t={t}
-          />
-        </div>
       </div>
 
       <form className="form details-form" onSubmit={handleSubmit} noValidate>
@@ -229,6 +222,15 @@ export default function PatientDetails({
           </button>
         </div>
       </form>
+
+      {/* Persistent Floating Read Aloud Button */}
+      <ReadAloud
+        text={`${t.details.title}. ${t.details.subtitle}`}
+        language={language}
+        t={t}
+        floating={true}
+        variant="floating"
+      />
     </div>
   )
 }

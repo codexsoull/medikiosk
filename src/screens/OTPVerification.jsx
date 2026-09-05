@@ -75,13 +75,6 @@ export default function OTPVerification({
       <div className="page-header">
         <h1 className="screen-title">{t.otp.title}</h1>
         <p className="screen-subtitle">{t.otp.subtitle}</p>
-        <div className="read-aloud-container">
-          <ReadAloud
-            text={`${t.otp.title}. ${t.otp.subtitle}. ${t.otp.codeSentText}`}
-            language={language}
-            t={t}
-          />
-        </div>
       </div>
 
       <div className="otp-content-box">
@@ -156,6 +149,15 @@ export default function OTPVerification({
           </div>
         </form>
       </div>
+
+      {/* Persistent Floating Read Aloud Button */}
+      <ReadAloud
+        text={`${t.otp.title}. ${t.otp.subtitle}. ${t.otp.codeSentText}`}
+        language={language}
+        t={t}
+        floating={true}
+        variant="floating"
+      />
     </div>
   )
 }

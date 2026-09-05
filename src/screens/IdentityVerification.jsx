@@ -58,13 +58,6 @@ export default function IdentityVerification({
       <div className="page-header">
         <h1 className="screen-title">{t.identity.title}</h1>
         <p className="screen-subtitle">{t.identity.subtitle}</p>
-        <div className="read-aloud-container">
-          <ReadAloud
-            text={`${t.identity.title}. ${t.identity.subtitle}. ${t.identity.methodLabel}`}
-            language={language}
-            t={t}
-          />
-        </div>
       </div>
 
       <div className="demo-notice-box">
@@ -158,6 +151,15 @@ export default function IdentityVerification({
           </button>
         </div>
       </form>
+
+      {/* Persistent Floating Read Aloud Button */}
+      <ReadAloud
+        text={`${t.identity.title}. ${t.identity.subtitle}. ${t.identity.methodLabel}`}
+        language={language}
+        t={t}
+        floating={true}
+        variant="floating"
+      />
     </div>
   )
 }

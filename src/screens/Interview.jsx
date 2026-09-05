@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import ChatBubble from '../components/ChatBubble'
 import ReadAloud from '../components/ReadAloud'
-import { detectRedFlagTrigger } from '../data/redFlags'
+import { detectRedFlagTrigger, getTriggerByKey } from '../data/redFlags'
 
 // SVG mic icon — no emoji
 const MicIcon = () => (
@@ -30,6 +30,8 @@ export default function Interview({
   const [inputText, setInputText] = useState('')
   const [voiceToast, setVoiceToast] = useState(false)
   const [pendingFollowUp, setPendingFollowUp] = useState(null)
+  const [autoRead, setAutoRead] = useState(false)
+  const [isSpeakingCurrent, setIsSpeakingCurrent] = useState(false)
 
   const chatBottomRef = useRef(null)
   const inputRef = useRef(null)
@@ -37,6 +39,148 @@ export default function Interview({
   const firedKeysRef = useRef(
     conversation.filter((m) => m.followUpKey).map((m) => m.followUpKey)
   )
+
+  const lastSpokenMsgIdRef = useRef(null)
+  const autoReadTimerRef = useRef(null)
+  const utteranceRef = useRef(null)
+
+  // Determine active language
+  const activeLang = language || (t?.interview?.patientName === 'आप (मरीज़)' ? 'Hindi' : 'English')
+
+  // Helper to resolve localized text of an AI message
+  const getAiMessageText = useCallback((msg) => {
+    if (!msg) return ''
+    if (msg.type === 'greeting') {
+      const g = t?.interview?.initialGreeting ? t.interview.initialGreeting(msg.patientName || patientData.name) : ''
+      const q = t?.interview?.questions?.[0] || ''
+      return `${g} ${q}`.trim()
+    }
+    if (typeof msg.questionIndex === 'number' && t?.interview?.questions?.[msg.questionIndex]) {
+      return t.interview.questions[msg.questionIndex]
+    }
+    if (msg.type === 'completion') {
+      const title = t?.interview?.interviewCompleteTitle || ''
+      const sub = t?.interview?.interviewCompleteSubtitle || ''
+      return `${title}. ${sub}`.trim()
+    }
+    if (msg.type === 'followup' && msg.triggerKey) {
+      const trigger = getTriggerByKey(msg.triggerKey)
+      if (trigger?.followUp?.[activeLang]) {
+        return trigger.followUp[activeLang]
+      }
+      if (trigger?.followUp?.English) {
+        return trigger.followUp.English
+      }
+    }
+    return msg.text || ''
+  }, [t, patientData.name, activeLang])
+
+  // Cancel any active speech or pending timers
+  const cancelSpeech = useCallback(() => {
+    if (autoReadTimerRef.current) {
+      clearTimeout(autoReadTimerRef.current)
+      autoReadTimerRef.current = null
+    }
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+    setIsSpeakingCurrent(false)
+  }, [])
+
+  // Speak specified text using native Web Speech API
+  const speakText = useCallback((text) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis || !text || !text.trim()) return
+
+    cancelSpeech()
+
+    window.dispatchEvent(
+      new CustomEvent('medikiosk-tts-start', {
+        detail: { instanceId: 'interview-auto-read' }
+      })
+    )
+
+    const utterance = new SpeechSynthesisUtterance(text.trim())
+    utterance.lang = activeLang === 'Hindi' ? 'hi-IN' : 'en-IN'
+    utterance.rate = 0.95
+
+    if (window.speechSynthesis.getVoices) {
+      const voices = window.speechSynthesis.getVoices()
+      const targetLang = activeLang === 'Hindi' ? 'hi' : 'en-IN'
+      const matched = voices.find(
+        (v) => v.lang && (v.lang === targetLang || v.lang.startsWith(targetLang))
+      )
+      if (matched) {
+        utterance.voice = matched
+      }
+    }
+
+    utterance.onstart = () => {
+      setIsSpeakingCurrent(true)
+    }
+
+    utterance.onend = () => {
+      setIsSpeakingCurrent(false)
+    }
+
+    utterance.onerror = (e) => {
+      if (e.error !== 'interrupted' && e.error !== 'canceled') {
+        console.warn('SpeechSynthesis error in Interview:', e.error)
+      }
+      setIsSpeakingCurrent(false)
+    }
+
+    utteranceRef.current = utterance
+    window.speechSynthesis.speak(utterance)
+  }, [activeLang, cancelSpeech])
+
+  // Cancel speech on unmount or language change
+  useEffect(() => {
+    return () => {
+      cancelSpeech()
+    }
+  }, [cancelSpeech])
+
+  useEffect(() => {
+    cancelSpeech()
+  }, [language, cancelSpeech])
+
+  // Listen for audio events to ensure mutual exclusion across all buttons & STT
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleOtherTts = (e) => {
+      if (e.detail?.instanceId !== 'interview-auto-read') {
+        setIsSpeakingCurrent(false)
+      }
+    }
+
+    const handleSttStart = () => {
+      cancelSpeech()
+    }
+
+    window.addEventListener('medikiosk-tts-start', handleOtherTts)
+    window.addEventListener('medikiosk-stt-start', handleSttStart)
+
+    return () => {
+      window.removeEventListener('medikiosk-tts-start', handleOtherTts)
+      window.removeEventListener('medikiosk-stt-start', handleSttStart)
+      cancelSpeech()
+    }
+  }, [cancelSpeech])
+
+  // Toggle Auto-Read mode when user clicks speaker button on an AI message
+  const handleToggleAutoRead = useCallback((msgId, text) => {
+    if (autoRead) {
+      // Turn Auto-Read OFF and stop speaking immediately
+      setAutoRead(false)
+      cancelSpeech()
+    } else {
+      // Turn Auto-Read ON and immediately speak the current question
+      setAutoRead(true)
+      lastSpokenMsgIdRef.current = msgId
+      speakText(text)
+    }
+  }, [autoRead, cancelSpeech, speakText])
 
   const scrollToBottom = () => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -62,9 +206,38 @@ export default function Interview({
     }
   }, [conversation.length, onUpdateConversation, patientData.name, t.interview])
 
+  // Auto-Read Trigger: When conversation updates and Auto-Read is active, read the latest AI question
+  useEffect(() => {
+    if (!autoRead) return
+
+    const latestAi = [...conversation].reverse().find((m) => m.sender === 'ai')
+    if (!latestAi) return
+
+    if (latestAi.id !== lastSpokenMsgIdRef.current) {
+      lastSpokenMsgIdRef.current = latestAi.id
+      cancelSpeech()
+
+      const textToSpeak = getAiMessageText(latestAi)
+      if (textToSpeak) {
+        autoReadTimerRef.current = setTimeout(() => {
+          speakText(textToSpeak)
+        }, 250)
+      }
+    }
+
+    return () => {
+      if (autoReadTimerRef.current) {
+        clearTimeout(autoReadTimerRef.current)
+      }
+    }
+  }, [conversation, autoRead, getAiMessageText, speakText, cancelSpeech])
+
   const handleSendMessage = (textToSend) => {
     const text = (typeof textToSend === 'string' ? textToSend : inputText).trim()
     if (!text || isFinished) return
+
+    // Immediately stop ongoing speech when user responds
+    cancelSpeech()
 
     const msgId = msgIdCounterRef.current++
 
@@ -176,6 +349,7 @@ export default function Interview({
   }
 
   const handleVoiceClick = () => {
+    cancelSpeech()
     setVoiceToast(true)
     setTimeout(() => {
       setVoiceToast(false)
@@ -190,11 +364,18 @@ export default function Interview({
     ? t.interview.quickSuggestions[currentQuestionIndex]
     : []
 
-  const activeAiSpeechText =
-    (conversation.length > 0 &&
-      [...conversation].reverse().find((m) => m.sender === 'ai')?.text) ||
-    t.interview.questions[currentQuestionIndex] ||
-    t.interview.title
+  const handleBack = () => {
+    cancelSpeech()
+    onBack()
+  }
+
+  const handleFinish = () => {
+    cancelSpeech()
+    onFinishInterview()
+  }
+
+  // Find latest AI message ID for controlled Auto-Read indicators
+  const latestAiMsgId = [...conversation].reverse().find((m) => m.sender === 'ai')?.id
 
   return (
     <div className="kiosk-container interview-card" role="main">
@@ -202,7 +383,7 @@ export default function Interview({
         <button
           type="button"
           className="back-button"
-          onClick={onBack}
+          onClick={handleBack}
           aria-label={t.common.back}
         >
           {t.common.back}
@@ -214,21 +395,26 @@ export default function Interview({
       <div className="page-header interview-page-header">
         <h1 className="screen-title">{t.interview.title}</h1>
         <p className="screen-subtitle">{t.interview.subtitle}</p>
-        <div className="read-aloud-container">
-          <ReadAloud
-            text={activeAiSpeechText}
-            language={language}
-            t={t}
-          />
-        </div>
       </div>
 
       {/* Conversational Chat Viewport */}
       <div className="chat-viewport" role="log" aria-live="polite">
         <div className="chat-messages-list">
-          {conversation.map((msg) => (
-            <ChatBubble key={msg.id} message={msg} t={t} language={language} />
-          ))}
+          {conversation.map((msg) => {
+            const isLatestAi = msg.id === latestAiMsgId
+            return (
+              <ChatBubble
+                key={msg.id}
+                message={msg}
+                t={t}
+                language={language}
+                autoRead={autoRead}
+                isLatestAi={isLatestAi}
+                isSpeakingCurrent={isLatestAi ? isSpeakingCurrent : false}
+                onToggleAutoRead={handleToggleAutoRead}
+              />
+            )
+          })}
           <div ref={chatBottomRef} />
         </div>
       </div>
@@ -273,7 +459,7 @@ export default function Interview({
           <button
             type="button"
             className="primary-button finish-interview-btn touch-target"
-            onClick={onFinishInterview}
+            onClick={handleFinish}
           >
             <span>{t.interview.finishBtn}</span>
             <span className="arrow-icon" aria-hidden="true">→</span>

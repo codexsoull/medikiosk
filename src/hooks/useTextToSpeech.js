@@ -13,6 +13,7 @@ export function useTextToSpeech({ text, language = 'English' }) {
     'SpeechSynthesisUtterance' in window
 
   const utteranceRef = useRef(null)
+  const instanceIdRef = useRef(`tts-${Math.random().toString(36).substring(2, 9)}`)
 
   // Cancel any active speech
   const stop = useCallback(() => {
@@ -28,6 +29,15 @@ export function useTextToSpeech({ text, language = 'English' }) {
 
     // Cancel any existing speech to prevent overlapping utterances
     window.speechSynthesis.cancel()
+
+    // Notify other TTS and STT instances
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('medikiosk-tts-start', {
+          detail: { instanceId: instanceIdRef.current }
+        })
+      )
+    }
 
     const utterance = new SpeechSynthesisUtterance(text.trim())
     utterance.lang = language === 'Hindi' ? 'hi-IN' : 'en-IN'
@@ -74,6 +84,29 @@ export function useTextToSpeech({ text, language = 'English' }) {
     }
   }, [isSpeaking, stop, speak])
 
+  // Listen for audio events to ensure mutual exclusion across all buttons & STT
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleOtherTts = (e) => {
+      if (e.detail?.instanceId !== instanceIdRef.current) {
+        setIsSpeaking(false)
+      }
+    }
+
+    const handleSttStart = () => {
+      stop()
+    }
+
+    window.addEventListener('medikiosk-tts-start', handleOtherTts)
+    window.addEventListener('medikiosk-stt-start', handleSttStart)
+
+    return () => {
+      window.removeEventListener('medikiosk-tts-start', handleOtherTts)
+      window.removeEventListener('medikiosk-stt-start', handleSttStart)
+    }
+  }, [stop])
+
   // Clean up and stop speech when component unmounts
   useEffect(() => {
     return () => {
@@ -99,4 +132,5 @@ export function useTextToSpeech({ text, language = 'English' }) {
     toggle
   }
 }
+
 

@@ -150,7 +150,13 @@ export const translations = {
       voiceToast: 'Voice input will be connected in the next integration phase.',
       voiceInputTitle: 'Voice input (Integration Pending)',
       followUpTag: 'Follow-up',
-      followUpQuickReplies: ['Yes', 'No', 'Not sure']
+      followUpQuickReplies: ['Yes', 'No', 'Not sure'],
+      autoReadLabel: 'Auto-Read Questions',
+      autoReadOn: 'Auto-read next questions',
+      readBtn: 'Read',
+      autoReadOnBadge: 'Auto-Read ON',
+      autoReadOnAria: 'Auto-Read is ON. Tap to turn OFF.',
+      autoReadOffAria: 'Read aloud and turn Auto-Read ON.'
     },
     upload: {
       title: 'Previous Medical Records',
@@ -436,7 +442,13 @@ export const translations = {
       voiceToast: 'वॉयस इनपुट अगले एकीकरण चरण में उपलब्ध होगा।',
       voiceInputTitle: 'वॉयस इनपुट (एकीकरण लंबित)',
       followUpTag: 'फॉलो-अप',
-      followUpQuickReplies: ['हाँ', 'नहीं', 'पक्का नहीं']
+      followUpQuickReplies: ['हाँ', 'नहीं', 'पक्का नहीं'],
+      autoReadLabel: 'प्रश्नों को स्वतः पढ़ें',
+      autoReadOn: 'अगले प्रश्न स्वतः बोलकर सुनाएं',
+      readBtn: 'पढ़ें',
+      autoReadOnBadge: 'स्वतः पढ़ें ON',
+      autoReadOnAria: 'स्वतः पढ़ना चालू है। बंद करने के लिए टैप करें।',
+      autoReadOffAria: 'पढ़कर सुनाएं और स्वतः पढ़ना चालू करें।'
     },
     upload: {
       title: 'पिछले चिकित्सा रिकॉर्ड',
