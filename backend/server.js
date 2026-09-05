@@ -3,6 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import healthRoutes from './routes/health.js'
 import casesRoutes from './routes/cases.js'
+import aiRoutes from './routes/ai.js'
 import './database/db.js' // Auto-initialize SQLite database & tables
 
 // Load environment variables from .env
@@ -37,6 +38,7 @@ app.use(
 // Mount API routes
 app.use('/api', healthRoutes)
 app.use('/api', casesRoutes)
+app.use('/api/ai', aiRoutes)
 
 // Root fallback route for convenience
 app.get('/', (req, res) => {
