@@ -3,6 +3,7 @@ import ProgressBar from '../components/ProgressBar'
 import ChatBubble from '../components/ChatBubble'
 import ReadAloud from '../components/ReadAloud'
 import { detectRedFlagTrigger, getTriggerByKey } from '../data/redFlags'
+import { useSpeechToText } from '../hooks/useSpeechToText'
 
 // SVG mic icon — no emoji
 const MicIcon = () => (
@@ -28,7 +29,7 @@ export default function Interview({
   t
 }) {
   const [inputText, setInputText] = useState('')
-  const [voiceToast, setVoiceToast] = useState(false)
+  const [voiceError, setVoiceError] = useState(null)
   const [pendingFollowUp, setPendingFollowUp] = useState(null)
   const [autoRead, setAutoRead] = useState(false)
   const [isSpeakingCurrent, setIsSpeakingCurrent] = useState(false)
@@ -43,6 +44,8 @@ export default function Interview({
   const lastSpokenMsgIdRef = useRef(null)
   const autoReadTimerRef = useRef(null)
   const utteranceRef = useRef(null)
+  const voiceErrorTimerRef = useRef(null)
+  const initialInputBeforeVoiceRef = useRef('')
 
   // Determine active language
   const activeLang = language || (t?.interview?.patientName === 'आप (मरीज़)' ? 'Hindi' : 'English')
@@ -133,16 +136,49 @@ export default function Interview({
     window.speechSynthesis.speak(utterance)
   }, [activeLang, cancelSpeech])
 
-  // Cancel speech on unmount or language change
+  const showVoiceError = useCallback((code) => {
+    if (voiceErrorTimerRef.current) {
+      clearTimeout(voiceErrorTimerRef.current)
+    }
+    setVoiceError(code)
+    voiceErrorTimerRef.current = setTimeout(() => {
+      setVoiceError(null)
+    }, 5000)
+  }, [])
+
+  const {
+    isListening,
+    startListening,
+    stopListening,
+    isSupported: isVoiceSupported
+  } = useSpeechToText({
+    language: activeLang,
+    onTranscriptChange: ({ fullTranscript }) => {
+      if (!fullTranscript) return
+      const base = initialInputBeforeVoiceRef.current.trim()
+      const combined = base ? `${base} ${fullTranscript}` : fullTranscript
+      setInputText(combined)
+    },
+    onError: (errCode) => {
+      showVoiceError(errCode)
+    }
+  })
+
+  // Cancel speech and stop voice recognition on unmount or language change
   useEffect(() => {
     return () => {
       cancelSpeech()
+      stopListening()
+      if (voiceErrorTimerRef.current) {
+        clearTimeout(voiceErrorTimerRef.current)
+      }
     }
-  }, [cancelSpeech])
+  }, [cancelSpeech, stopListening])
 
   useEffect(() => {
     cancelSpeech()
-  }, [language, cancelSpeech])
+    stopListening()
+  }, [language, cancelSpeech, stopListening])
 
   // Listen for audio events to ensure mutual exclusion across all buttons & STT
   useEffect(() => {
@@ -238,6 +274,9 @@ export default function Interview({
 
     // Immediately stop ongoing speech when user responds
     cancelSpeech()
+    stopListening()
+    initialInputBeforeVoiceRef.current = ''
+    setVoiceError(null)
 
     const msgId = msgIdCounterRef.current++
 
@@ -350,10 +389,18 @@ export default function Interview({
 
   const handleVoiceClick = () => {
     cancelSpeech()
-    setVoiceToast(true)
-    setTimeout(() => {
-      setVoiceToast(false)
-    }, 4000)
+
+    if (isListening) {
+      stopListening()
+    } else {
+      if (!isVoiceSupported) {
+        showVoiceError('not-supported')
+        return
+      }
+      setVoiceError(null)
+      initialInputBeforeVoiceRef.current = inputText
+      startListening()
+    }
   }
 
   const currentSuggestions = isFinished
@@ -366,11 +413,13 @@ export default function Interview({
 
   const handleBack = () => {
     cancelSpeech()
+    stopListening()
     onBack()
   }
 
   const handleFinish = () => {
     cancelSpeech()
+    stopListening()
     onFinishInterview()
   }
 
@@ -438,11 +487,17 @@ export default function Interview({
         </div>
       )}
 
-      {/* Voice Toast Feedback — SVG-only, no emoji */}
-      {voiceToast && (
-        <div className="voice-toast-banner" role="alert">
+      {/* Voice Error Banner */}
+      {voiceError && (
+        <div className="voice-error-banner" role="alert">
           <MicIcon />
-          <span>{t.interview.voiceToast}</span>
+          <span>
+            {voiceError === 'not-supported'
+              ? (t.interview.voiceNotSupported || 'Voice input is not supported in this browser.')
+              : voiceError === 'permission-denied'
+              ? (t.interview.voicePermissionDenied || 'Microphone permission is required for voice input.')
+              : (t.interview.voiceError || 'Unable to hear your voice. Please try again.')}
+          </span>
         </div>
       )}
 
@@ -469,13 +524,16 @@ export default function Interview({
         <div className="chat-input-bar">
           <button
             type="button"
-            className="voice-button touch-target"
+            className={`voice-button touch-target ${isListening ? 'is-listening' : ''}`}
             onClick={handleVoiceClick}
-            title={t.interview.voiceInputTitle}
-            aria-label={t.interview.voiceBtnLabel}
+            title={isListening ? (t.interview.voiceInputListeningTitle || 'Listening... Tap to stop') : (t.interview.voiceInputTitle || 'Speak your answer')}
+            aria-label={isListening ? (t.interview.voiceInputListeningTitle || 'Listening... Tap to stop') : (t.interview.voiceBtnLabel || 'Voice input')}
+            aria-pressed={isListening}
           >
             <MicIcon />
-            <span className="voice-btn-text">{t.interview.voiceBtnLabel}</span>
+            <span className="voice-btn-text">
+              {isListening ? (t.interview.voiceBtnListening || 'Listening...') : (t.interview.voiceBtnLabel || 'Voice input')}
+            </span>
           </button>
 
           <input
