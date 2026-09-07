@@ -163,7 +163,9 @@ export const translations = {
       autoReadOnAria: 'Auto-Read is ON. Tap to turn OFF.',
       autoReadOffAria: 'Read aloud and turn Auto-Read ON.',
       aiThinking: 'MediKiosk AI is thinking...',
-      aiUnavailable: 'AI assistant temporarily unavailable. Continuing with standard question.'
+      aiUnavailable: 'AI assistant temporarily unavailable. Continuing with standard question.',
+      generatingSummary: 'Generating Clinical Summary...',
+      summaryUnavailable: 'AI summary temporarily unavailable. Standard clinical summary generated.'
     },
     upload: {
       title: 'Previous Medical Records',
@@ -462,7 +464,9 @@ export const translations = {
       autoReadOnAria: 'स्वतः पढ़ना चालू है। बंद करने के लिए टैप करें।',
       autoReadOffAria: 'पढ़कर सुनाएं और स्वतः पढ़ना चालू करें।',
       aiThinking: 'एआई सोच रहा है...',
-      aiUnavailable: 'एआई सहायक अस्थायी रूप से अनुपलब्ध है। मानक प्रश्न जारी रखा जा रहा है।'
+      aiUnavailable: 'एआई सहायक अस्थायी रूप से अनुपलब्ध है। मानक प्रश्न जारी रखा जा रहा है।',
+      generatingSummary: 'चिकित्सीय सारांश तैयार हो रहा है...',
+      summaryUnavailable: 'एआई सारांश अस्थायी रूप से अनुपलब्ध है। मानक चिकित्सीय सारांश तैयार किया गया है।'
     },
     upload: {
       title: 'पिछले चिकित्सा रिकॉर्ड',

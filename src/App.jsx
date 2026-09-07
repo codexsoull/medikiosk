@@ -158,18 +158,32 @@ export default function App() {
     setScreen('interview')
   }
 
-  const handleFinishInterview = () => {
+  const handleFinishInterview = (aiSummary) => {
     const answersByIndex = extractAnswersByIndex(conversation)
     const redFlags = extractRedFlagResponses(conversation)
-    const { summary, clinicalAlerts } = generateStructuredSummaryFromAnswers(answersByIndex, {
+    const { summary: deterministicSummary, clinicalAlerts } = generateStructuredSummaryFromAnswers(answersByIndex, {
       redFlags,
       documentCount: (caseData.documents || []).length
     })
 
+    const finalSummary = aiSummary && typeof aiSummary === 'object'
+      ? {
+          ...deterministicSummary,
+          ...aiSummary,
+          chiefComplaint: (aiSummary.chiefComplaint && aiSummary.chiefComplaint !== 'Not reported')
+            ? aiSummary.chiefComplaint
+            : deterministicSummary.chiefComplaint,
+          historyOfPresentIllness: (aiSummary.historyOfPresentIllness && aiSummary.historyOfPresentIllness !== 'Not reported')
+            ? aiSummary.historyOfPresentIllness
+            : deterministicSummary.historyOfPresentIllness,
+          isAiDraft: true
+        }
+      : deterministicSummary
+
     setCaseData((prev) => ({
       ...prev,
       complaint: {
-        chiefComplaint: summary.chiefComplaint,
+        chiefComplaint: finalSummary.chiefComplaint || deterministicSummary.chiefComplaint,
         onset: answersByIndex[1] || 'Recently',
         severity: answersByIndex[2] || 'Moderate',
         associatedSymptoms: answersByIndex[3] || 'None'
@@ -181,7 +195,7 @@ export default function App() {
       },
       summary: {
         ...prev.summary,
-        ...summary
+        ...finalSummary
       },
       clinicalAlerts: clinicalAlerts || []
     }))
@@ -203,8 +217,8 @@ export default function App() {
     setCaseData((prev) => ({
       ...prev,
       summary: {
-        ...prev.summary,
-        ...summary
+        ...summary,
+        ...prev.summary
       },
       clinicalAlerts: clinicalAlerts || []
     }))

@@ -1,5 +1,6 @@
 import express from 'express'
 import { generateInterviewResponse } from '../services/ai.js'
+import { generateClinicalSummary } from '../services/summary.js'
 
 const router = express.Router()
 
@@ -124,6 +125,85 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
     const userMessage = isConfigError
       ? 'AI service configuration missing'
       : 'AI service temporarily unavailable'
+
+    return res.status(statusCode).json({
+      status: 'error',
+      message: userMessage
+    })
+  }
+})
+
+/**
+ * AI-powered structured clinical summary generation from patient interview
+ * POST /api/ai/summary
+ *
+ * Body:
+ * {
+ *   "conversation": Array<{ role: 'user' | 'assistant', content: string }> (required, non-empty),
+ *   "language": "en" | "hi" (optional, default: "en")
+ * }
+ */
+router.post(['/summary', '/ai/summary'], async (req, res) => {
+  const { conversation, language } = req.body || {}
+
+  // 1. Validate conversation is a non-empty array
+  if (!conversation || !Array.isArray(conversation) || conversation.length === 0) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation error: "conversation" is required and must be a non-empty array'
+    })
+  }
+
+  // 2. Validate language: default to 'en', reject unsupported
+  let resolvedLanguage = 'en'
+  if (language !== undefined && language !== null) {
+    if (typeof language !== 'string' || !SUPPORTED_LANGUAGES.includes(language.toLowerCase().trim())) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Validation error: Unsupported language "${language}". Supported languages are: ${SUPPORTED_LANGUAGES.join(', ')}`
+      })
+    }
+    resolvedLanguage = language.toLowerCase().trim()
+  }
+
+  // 3. Filter valid messages from conversation
+  const sanitizedConversation = conversation
+    .filter((m) => m && typeof m.content === 'string' && m.content.trim().length > 0)
+    .map((m) => ({
+      role: m.role === 'assistant' || m.role === 'ai' ? 'assistant' : 'user',
+      content: m.content.trim()
+    }))
+
+  if (sanitizedConversation.length === 0) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation error: "conversation" must contain at least one valid message with text content'
+    })
+  }
+
+  // 4. Generate structured clinical summary via service
+  try {
+    const summary = await generateClinicalSummary({
+      conversation: sanitizedConversation,
+      language: resolvedLanguage
+    })
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        summary,
+        language: resolvedLanguage
+      }
+    })
+  } catch (error) {
+    console.error('AI summary endpoint error:', error.message)
+
+    // Security: Never leak API keys, stack traces, or internal metadata to client
+    const isConfigError = error.message?.includes('GROQ_API_KEY is not configured')
+    const statusCode = isConfigError ? 503 : 500
+    const userMessage = isConfigError
+      ? 'AI service configuration missing'
+      : 'AI summary service temporarily unavailable'
 
     return res.status(statusCode).json({
       status: 'error',

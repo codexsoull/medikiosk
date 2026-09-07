@@ -119,6 +119,28 @@ export function mapBackendCaseToFrontend(row) {
     }
   }
 
+  // Safely format HPI if stored as raw object
+  let formattedHpi = summary.historyOfPresentIllness || row.symptoms || ''
+  if (!formattedHpi && summary.hpi && typeof summary.hpi === 'object') {
+    const lines = []
+    Object.entries(summary.hpi).forEach(([k, v]) => {
+      if (v && v !== 'Not reported') lines.push(`${k}: ${v}`)
+    })
+    formattedHpi = lines.join('. ')
+  } else if (typeof formattedHpi === 'object') {
+    formattedHpi = JSON.stringify(formattedHpi)
+  }
+
+  // Safely format personal history if stored as raw object
+  let formattedPersonal = summary.personalHistory || ''
+  if (typeof formattedPersonal === 'object') {
+    const items = []
+    Object.entries(formattedPersonal).forEach(([k, v]) => {
+      if (v && v !== 'Not reported') items.push(`${k}: ${v}`)
+    })
+    formattedPersonal = items.join('. ')
+  }
+
   // Ensure clinical_alerts is an array
   let clinicalAlerts = row.clinical_alerts
   if (typeof clinicalAlerts === 'string') {
@@ -158,14 +180,16 @@ export function mapBackendCaseToFrontend(row) {
       associatedSymptoms: row.symptoms || ''
     },
     summary: {
+      ...summary,
       chiefComplaint: summary.chiefComplaint || row.chief_complaint || '',
-      historyOfPresentIllness: summary.historyOfPresentIllness || '',
-      pastMedicalHistory: summary.pastMedicalHistory || row.medical_history || '',
-      medications: summary.medications || row.medications || '',
-      allergies: summary.allergies || row.allergies || '',
-      familyHistory: summary.familyHistory || '',
-      personalHistory: summary.personalHistory || '',
-      reviewOfSystems: summary.reviewOfSystems || ''
+      historyOfPresentIllness: formattedHpi || '',
+      pastMedicalHistory: typeof summary.pastMedicalHistory === 'string' ? summary.pastMedicalHistory : (row.medical_history || ''),
+      medications: typeof summary.medications === 'string' ? summary.medications : (row.medications || ''),
+      allergies: typeof summary.allergies === 'string' ? summary.allergies : (row.allergies || ''),
+      familyHistory: typeof summary.familyHistory === 'string' ? summary.familyHistory : '',
+      personalHistory: formattedPersonal || '',
+      reviewOfSystems: typeof summary.reviewOfSystems === 'string' ? summary.reviewOfSystems : '',
+      isAiDraft: Boolean(summary.isAiDraft)
     },
     clinicalAlerts: clinicalAlerts,
     documents: [],

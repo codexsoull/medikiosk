@@ -5,6 +5,7 @@ import ReadAloud from '../components/ReadAloud'
 import { detectRedFlagTrigger, getTriggerByKey } from '../data/redFlags'
 import { useSpeechToText } from '../hooks/useSpeechToText'
 import { sendMessageToAI } from '../api/ai'
+import { generateClinicalSummaryAPI } from '../api/ai'
 
 // SVG mic icon — no emoji
 const MicIcon = () => (
@@ -33,6 +34,7 @@ export default function Interview({
   const [voiceError, setVoiceError] = useState(null)
   const [aiError, setAiError] = useState(null)
   const [isAiThinking, setIsAiThinking] = useState(false)
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false)
   const [pendingFollowUp, setPendingFollowUp] = useState(null)
   const [autoRead, setAutoRead] = useState(false)
   const [isSpeakingCurrent, setIsSpeakingCurrent] = useState(false)
@@ -466,10 +468,41 @@ export default function Interview({
     onBack()
   }
 
+  const finishAndGenerateSummary = async () => {
+    if (isGeneratingSummary) return
+    setIsGeneratingSummary(true)
+
+    try {
+      const formattedHistory = conversation
+        .filter((m) => m && m.text)
+        .map((m) => ({
+          role: m.sender === 'patient' ? 'user' : 'assistant',
+          content: m.text
+        }))
+
+      const result = await generateClinicalSummaryAPI({
+        conversation: formattedHistory,
+        language: activeLang === 'Hindi' ? 'hi' : 'en'
+      })
+
+      if (result?.data?.summary) {
+        onFinishInterview(result.data.summary)
+        return
+      }
+    } catch (err) {
+      console.warn('AI summary generation failed, proceeding with fallback:', err.message)
+      showAiError(t?.interview?.summaryUnavailable || 'AI summary temporarily unavailable. Standard clinical summary generated.')
+    } finally {
+      setIsGeneratingSummary(false)
+    }
+
+    onFinishInterview(null)
+  }
+
   const handleFinish = () => {
     cancelSpeech()
     stopListening()
-    onFinishInterview()
+    finishAndGenerateSummary()
   }
 
   // Find latest AI message ID for controlled Auto-Read indicators
@@ -585,8 +618,9 @@ export default function Interview({
             type="button"
             className="primary-button finish-interview-btn touch-target"
             onClick={handleFinish}
+            disabled={isGeneratingSummary}
           >
-            <span>{t.interview.finishBtn}</span>
+            <span>{isGeneratingSummary ? (t?.interview?.generatingSummary || 'Generating Clinical Summary...') : t.interview.finishBtn}</span>
             <span className="arrow-icon" aria-hidden="true">→</span>
           </button>
         </div>
