@@ -161,7 +161,9 @@ export const translations = {
       readBtn: 'Read',
       autoReadOnBadge: 'Auto-Read ON',
       autoReadOnAria: 'Auto-Read is ON. Tap to turn OFF.',
-      autoReadOffAria: 'Read aloud and turn Auto-Read ON.'
+      autoReadOffAria: 'Read aloud and turn Auto-Read ON.',
+      aiThinking: 'MediKiosk AI is thinking...',
+      aiUnavailable: 'AI assistant temporarily unavailable. Continuing with standard question.'
     },
     upload: {
       title: 'Previous Medical Records',
@@ -458,7 +460,9 @@ export const translations = {
       readBtn: 'पढ़ें',
       autoReadOnBadge: 'स्वतः पढ़ें ON',
       autoReadOnAria: 'स्वतः पढ़ना चालू है। बंद करने के लिए टैप करें।',
-      autoReadOffAria: 'पढ़कर सुनाएं और स्वतः पढ़ना चालू करें।'
+      autoReadOffAria: 'पढ़कर सुनाएं और स्वतः पढ़ना चालू करें।',
+      aiThinking: 'एआई सोच रहा है...',
+      aiUnavailable: 'एआई सहायक अस्थायी रूप से अनुपलब्ध है। मानक प्रश्न जारी रखा जा रहा है।'
     },
     upload: {
       title: 'पिछले चिकित्सा रिकॉर्ड',

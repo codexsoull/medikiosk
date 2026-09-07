@@ -1,4 +1,5 @@
 import express from 'express'
+import { generateInterviewResponse } from '../services/ai.js'
 
 const router = express.Router()
 
@@ -48,5 +49,87 @@ router.post(['/test', '/ai/test'], (req, res) => {
   })
 })
 
-export default router
+/**
+ * Conversational AI clinical intake turn
+ * POST /api/ai/chat
+ * 
+ * Body:
+ * {
+ *   "message": string (required, non-empty),
+ *   "language": "en" | "hi" (optional, default: "en"),
+ *   "conversation": Array<{ role: 'user' | 'assistant', content: string }> (optional)
+ * }
+ */
+router.post(['/chat', '/ai/chat'], async (req, res) => {
+  const { message, language, conversation } = req.body || {}
 
+  // 1. Validate message
+  if (!message || typeof message !== 'string' || !message.trim()) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation error: "message" is required and must be a non-empty string'
+    })
+  }
+
+  // 2. Validate language
+  let resolvedLanguage = 'en'
+  if (language !== undefined && language !== null) {
+    if (typeof language !== 'string' || !SUPPORTED_LANGUAGES.includes(language.toLowerCase().trim())) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Validation error: Unsupported language "${language}". Supported languages are: ${SUPPORTED_LANGUAGES.join(', ')}`
+      })
+    }
+    resolvedLanguage = language.toLowerCase().trim()
+  }
+
+  // 3. Validate conversation if supplied
+  let sanitizedConversation = []
+  if (conversation !== undefined && conversation !== null) {
+    if (!Array.isArray(conversation)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Validation error: "conversation" must be an array of messages'
+      })
+    }
+
+    // Limit and sanitize conversation history (last 10 messages max)
+    sanitizedConversation = conversation.slice(-10).map((item) => ({
+      role: item?.role === 'assistant' ? 'assistant' : 'user',
+      content: typeof item?.content === 'string' ? item.content.trim() : ''
+    })).filter((item) => item.content.length > 0)
+  }
+
+  // 4. Generate AI response via service
+  try {
+    const result = await generateInterviewResponse({
+      message: message.trim(),
+      language: resolvedLanguage,
+      conversation: sanitizedConversation
+    })
+
+    return res.status(200).json({
+      status: 'success',
+      data: {
+        reply: result.reply,
+        language: result.language
+      }
+    })
+  } catch (error) {
+    console.error('AI chat endpoint error:', error.message)
+
+    // Security: Never leak API keys, stack traces, or internal metadata to client
+    const isConfigError = error.message?.includes('GROQ_API_KEY is not configured')
+    const statusCode = isConfigError ? 503 : 500
+    const userMessage = isConfigError
+      ? 'AI service configuration missing'
+      : 'AI service temporarily unavailable'
+
+    return res.status(statusCode).json({
+      status: 'error',
+      message: userMessage
+    })
+  }
+})
+
+export default router

@@ -4,6 +4,7 @@ import ChatBubble from '../components/ChatBubble'
 import ReadAloud from '../components/ReadAloud'
 import { detectRedFlagTrigger, getTriggerByKey } from '../data/redFlags'
 import { useSpeechToText } from '../hooks/useSpeechToText'
+import { sendMessageToAI } from '../api/ai'
 
 // SVG mic icon — no emoji
 const MicIcon = () => (
@@ -30,6 +31,8 @@ export default function Interview({
 }) {
   const [inputText, setInputText] = useState('')
   const [voiceError, setVoiceError] = useState(null)
+  const [aiError, setAiError] = useState(null)
+  const [isAiThinking, setIsAiThinking] = useState(false)
   const [pendingFollowUp, setPendingFollowUp] = useState(null)
   const [autoRead, setAutoRead] = useState(false)
   const [isSpeakingCurrent, setIsSpeakingCurrent] = useState(false)
@@ -45,6 +48,7 @@ export default function Interview({
   const autoReadTimerRef = useRef(null)
   const utteranceRef = useRef(null)
   const voiceErrorTimerRef = useRef(null)
+  const aiErrorTimerRef = useRef(null)
   const initialInputBeforeVoiceRef = useRef('')
 
   // Determine active language
@@ -53,6 +57,9 @@ export default function Interview({
   // Helper to resolve localized text of an AI message
   const getAiMessageText = useCallback((msg) => {
     if (!msg) return ''
+    if (msg.isAiGenerated) {
+      return msg.text || ''
+    }
     if (msg.type === 'greeting') {
       const g = t?.interview?.initialGreeting ? t.interview.initialGreeting(msg.patientName || patientData.name) : ''
       const q = t?.interview?.questions?.[0] || ''
@@ -146,6 +153,16 @@ export default function Interview({
     }, 5000)
   }, [])
 
+  const showAiError = useCallback((msg) => {
+    if (aiErrorTimerRef.current) {
+      clearTimeout(aiErrorTimerRef.current)
+    }
+    setAiError(msg || true)
+    aiErrorTimerRef.current = setTimeout(() => {
+      setAiError(null)
+    }, 6000)
+  }, [])
+
   const {
     isListening,
     startListening,
@@ -171,6 +188,9 @@ export default function Interview({
       stopListening()
       if (voiceErrorTimerRef.current) {
         clearTimeout(voiceErrorTimerRef.current)
+      }
+      if (aiErrorTimerRef.current) {
+        clearTimeout(aiErrorTimerRef.current)
       }
     }
   }, [cancelSpeech, stopListening])
@@ -268,9 +288,9 @@ export default function Interview({
     }
   }, [conversation, autoRead, getAiMessageText, speakText, cancelSpeech])
 
-  const handleSendMessage = (textToSend) => {
+  const handleSendMessage = async (textToSend) => {
     const text = (typeof textToSend === 'string' ? textToSend : inputText).trim()
-    if (!text || isFinished) return
+    if (!text || isFinished || isAiThinking) return
 
     // Immediately stop ongoing speech when user responds
     cancelSpeech()
@@ -353,12 +373,41 @@ export default function Interview({
         const updatedMessages = [...conversation, patientMsg]
 
         if (nextIndex < t.interview.questions.length) {
+          onUpdateConversation(updatedMessages)
+          setIsAiThinking(true)
+          let dynamicAiReply = null
+
+          try {
+            const conversationForAi = updatedMessages
+              .filter((m) => m && m.text)
+              .map((m) => ({
+                role: m.sender === 'patient' ? 'user' : 'assistant',
+                content: m.text
+              }))
+
+            const aiResponse = await sendMessageToAI({
+              message: text,
+              language: activeLang === 'Hindi' ? 'hi' : 'en',
+              conversation: conversationForAi
+            })
+
+            if (aiResponse?.data?.reply) {
+              dynamicAiReply = aiResponse.data.reply.trim()
+            }
+          } catch (err) {
+            console.warn('AI turn error, continuing standard interview:', err.message)
+            showAiError(t?.interview?.aiUnavailable || 'AI assistant temporarily unavailable. Continuing with standard question.')
+          } finally {
+            setIsAiThinking(false)
+          }
+
           const nextAiQuestion = {
             id: `msg-ai-${msgId + 1}`,
             sender: 'ai',
             type: 'question',
             questionIndex: nextIndex,
-            text: t.interview.questions[nextIndex],
+            isAiGenerated: Boolean(dynamicAiReply),
+            text: dynamicAiReply || t.interview.questions[nextIndex],
             time: 'Just now'
           }
           onUpdateConversation([...updatedMessages, nextAiQuestion])
@@ -464,12 +513,20 @@ export default function Interview({
               />
             )
           })}
+          {isAiThinking && (
+            <div className="ai-thinking-indicator" role="status" aria-live="polite">
+              <span className="thinking-dot" />
+              <span className="thinking-dot" />
+              <span className="thinking-dot" />
+              <span>{t?.interview?.aiThinking || 'MediKiosk AI is thinking...'}</span>
+            </div>
+          )}
           <div ref={chatBottomRef} />
         </div>
       </div>
 
       {/* Touch-First Quick Option Suggestions */}
-      {!isFinished && currentSuggestions.length > 0 && (
+      {!isFinished && !isAiThinking && currentSuggestions.length > 0 && (
         <div className="quick-suggestions-bar" aria-label={t.interview.quickOptionsLabel}>
           <span className="suggestions-title">{t.interview.quickOptionsLabel}</span>
           <div className="suggestions-chips">
@@ -479,11 +536,24 @@ export default function Interview({
                 type="button"
                 className="chip-button touch-target"
                 onClick={() => handleSendMessage(item)}
+                disabled={isAiThinking}
               >
                 {item}
               </button>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* AI Error Banner */}
+      {aiError && (
+        <div className="ai-error-banner" role="alert">
+          <span aria-hidden="true">⚠️</span>
+          <span>
+            {typeof aiError === 'string'
+              ? aiError
+              : (t?.interview?.aiUnavailable || 'AI assistant temporarily unavailable. Continuing with standard question.')}
+          </span>
         </div>
       )}
 
@@ -526,6 +596,7 @@ export default function Interview({
             type="button"
             className={`voice-button touch-target ${isListening ? 'is-listening' : ''}`}
             onClick={handleVoiceClick}
+            disabled={isAiThinking}
             title={isListening ? (t.interview.voiceInputListeningTitle || 'Listening... Tap to stop') : (t.interview.voiceInputTitle || 'Speak your answer')}
             aria-label={isListening ? (t.interview.voiceInputListeningTitle || 'Listening... Tap to stop') : (t.interview.voiceBtnLabel || 'Voice input')}
             aria-pressed={isListening}
@@ -544,14 +615,15 @@ export default function Interview({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
+            disabled={isAiThinking}
             aria-label={t.interview.inputPlaceholder}
           />
 
           <button
             type="button"
-            className={`send-button touch-target ${inputText.trim() ? 'active' : ''}`}
+            className={`send-button touch-target ${inputText.trim() && !isAiThinking ? 'active' : ''}`}
             onClick={() => handleSendMessage()}
-            disabled={!inputText.trim()}
+            disabled={!inputText.trim() || isAiThinking}
             aria-label={t.interview.sendBtn}
           >
             {t.interview.sendBtn}

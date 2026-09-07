@@ -20,7 +20,9 @@ export default function ChatBubble({
   // If message has dynamic question, greeting or followup key, render in active language
   let displayText = message.text
   if (isAi && t?.interview) {
-    if (message.type === 'greeting') {
+    if (message.isAiGenerated) {
+      displayText = message.text
+    } else if (message.type === 'greeting') {
       displayText = `${t.interview.initialGreeting(message.patientName)} ${t.interview.questions[0]}`
     } else if (typeof message.questionIndex === 'number' && t.interview.questions[message.questionIndex]) {
       displayText = t.interview.questions[message.questionIndex]
