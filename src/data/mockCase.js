@@ -200,13 +200,43 @@ export function generateStructuredSummaryFromAnswers(answersByIndex = [], option
   const hasSmoking = smokingKeywords.some((kw) => allAnswerTexts.includes(kw.toLowerCase()))
   const hasAlcohol = alcoholKeywords.some((kw) => allAnswerTexts.includes(kw.toLowerCase()))
 
+  const q8 = answersByIndex[7]?.trim()
+  const q9 = answersByIndex[8]?.trim()
+  const q10 = answersByIndex[9]?.trim()
+
+  // Family History
+  let familyHistory = 'No significant family history of hereditary illnesses reported.'
+  if (q8) {
+    if (
+      ['none', 'no', 'कोई नहीं', 'no significant family history', 'परिवार में कोई गंभीर बीमारी नहीं'].includes(
+        q8.toLowerCase()
+      )
+    ) {
+      familyHistory = 'No significant family history of hereditary illnesses reported.'
+    } else {
+      familyHistory = q8
+    }
+  }
+
   let personalHistory = 'Non-smoker, non-alcoholic. Regular sleep and dietary pattern reported.'
-  if (hasSmoking && hasAlcohol) {
+  if (q9) {
+    if (['none', 'no', 'non-smoker, non-alcoholic', 'धूम्रपान या शराब नहीं लेते'].includes(q9.toLowerCase())) {
+      personalHistory = 'Non-smoker, non-alcoholic. Regular sleep and dietary pattern reported.'
+    } else {
+      personalHistory = q9
+    }
+  } else if (hasSmoking && hasAlcohol) {
     personalHistory = 'Patient reports history of tobacco/smoking use and alcohol consumption. Dietary pattern and routine noted.'
   } else if (hasSmoking) {
     personalHistory = 'Patient reports history of tobacco/smoking use. Non-alcoholic. Dietary pattern and routine noted.'
   } else if (hasAlcohol) {
     personalHistory = 'Patient reports history of alcohol consumption. Non-smoker. Dietary pattern and routine noted.'
+  }
+
+  // Review of Systems
+  let reviewOfSystems = 'Cardiovascular: Normal rhythm. Respiratory: Clear. GI: No acute complaints. CNS: Alert & Oriented.'
+  if (q10 && !['none', 'no', 'no other symptoms', 'कोई अन्य लक्षण नहीं', 'none of these', 'इनमें से कोई नहीं'].includes(q10.toLowerCase())) {
+    reviewOfSystems = `Pertinent systemic findings: ${q10}. Alert & Oriented.`
   }
 
   return {
@@ -216,9 +246,9 @@ export function generateStructuredSummaryFromAnswers(answersByIndex = [], option
       pastMedicalHistory: pmh,
       medications: meds,
       allergies: allergies,
-      familyHistory: 'No significant family history of hereditary illnesses reported.',
+      familyHistory: familyHistory,
       personalHistory: personalHistory,
-      reviewOfSystems: 'Cardiovascular: Normal rhythm. Respiratory: Clear. GI: No acute complaints. CNS: Alert & Oriented.'
+      reviewOfSystems: reviewOfSystems
     },
     clinicalAlerts
   }

@@ -6,6 +6,12 @@ import { detectRedFlagTrigger, getTriggerByKey } from '../data/redFlags'
 import { useSpeechToText } from '../hooks/useSpeechToText'
 import { sendMessageToAI } from '../api/ai'
 import { generateClinicalSummaryAPI } from '../api/ai'
+import {
+  mapIndexToSection,
+  getNextIncompleteSection,
+  getFallbackQuestionForSection,
+  getQuickSuggestionsForSection
+} from '../data/clinicalSections'
 
 // SVG mic icon — no emoji
 const MicIcon = () => (
@@ -59,7 +65,7 @@ export default function Interview({
   // Helper to resolve localized text of an AI message
   const getAiMessageText = useCallback((msg) => {
     if (!msg) return ''
-    if (msg.isAiGenerated) {
+    if (msg.isAiGenerated || msg.section) {
       return msg.text || ''
     }
     if (msg.type === 'greeting') {
@@ -255,6 +261,7 @@ export default function Interview({
         id: 'msg-ai-0',
         sender: 'ai',
         type: 'greeting',
+        section: 'chiefComplaint',
         questionIndex: 0,
         patientName: patientData.name,
         text: `${t.interview.initialGreeting(patientData.name)} ${t.interview.questions[0]}`,
@@ -308,6 +315,7 @@ export default function Interview({
         id: `msg-patient-${msgId}`,
         sender: 'patient',
         followUpKey: pendingFollowUp.key,
+        section: pendingFollowUp.section || mapIndexToSection(pendingFollowUp.resumeIndex - 1),
         text,
         time: 'Just now'
       }
@@ -315,18 +323,53 @@ export default function Interview({
       const resumeIdx = pendingFollowUp.resumeIndex
       setPendingFollowUp(null)
 
-      if (resumeIdx < t.interview.questions.length) {
+      const updatedWithPatient = [...conversation, patientMsg]
+      const nextSection = getNextIncompleteSection(updatedWithPatient)
+
+      if (nextSection && resumeIdx < t.interview.questions.length) {
+        setIsAiThinking(true)
+        let dynamicAiReply = null
+
+        try {
+          const conversationForAi = updatedWithPatient
+            .filter((m) => m && m.text)
+            .map((m) => ({
+              role: m.sender === 'patient' ? 'user' : 'assistant',
+              content: m.text
+            }))
+
+          const aiResponse = await sendMessageToAI({
+            message: text,
+            language: activeLang === 'Hindi' ? 'hi' : 'en',
+            conversation: conversationForAi,
+            currentSection: nextSection
+          })
+
+          if (aiResponse?.data?.reply) {
+            dynamicAiReply = aiResponse.data.reply.trim()
+          }
+        } catch (err) {
+          console.warn('AI turn error on resume, continuing standard interview:', err.message)
+          showAiError(t?.interview?.aiUnavailable || 'AI assistant temporarily unavailable. Continuing with standard question.')
+        } finally {
+          setIsAiThinking(false)
+        }
+
+        const fallbackText = getFallbackQuestionForSection(nextSection, activeLang) || t.interview.questions[resumeIdx]
+
         const nextAiQuestion = {
           id: `msg-ai-${msgId + 1}`,
           sender: 'ai',
           type: 'question',
+          section: nextSection,
           questionIndex: resumeIdx,
-          text: t.interview.questions[resumeIdx],
+          isAiGenerated: Boolean(dynamicAiReply),
+          text: dynamicAiReply || fallbackText,
           time: 'Just now'
         }
-        onUpdateConversation([...conversation, patientMsg, nextAiQuestion])
+        onUpdateConversation([...updatedWithPatient, nextAiQuestion])
         onUpdateQuestionIndex(resumeIdx)
-      } else {
+      } else if (!nextSection) {
         const completionMsg = {
           id: `msg-ai-final-${msgId + 1}`,
           sender: 'ai',
@@ -334,15 +377,33 @@ export default function Interview({
           text: `${t.interview.interviewCompleteTitle}. ${t.interview.interviewCompleteSubtitle}`,
           time: 'Just now'
         }
-        onUpdateConversation([...conversation, patientMsg, completionMsg])
+        onUpdateConversation([...updatedWithPatient, completionMsg])
         onSetFinished(true)
+      } else {
+        const fallbackText = getFallbackQuestionForSection(nextSection, activeLang)
+        const nextAiQuestion = {
+          id: `msg-ai-${msgId + 1}`,
+          sender: 'ai',
+          type: 'question',
+          section: nextSection,
+          questionIndex: resumeIdx < t.interview.questions.length ? resumeIdx : t.interview.questions.length - 1,
+          isAiGenerated: false,
+          text: fallbackText,
+          time: 'Just now'
+        }
+        onUpdateConversation([...updatedWithPatient, nextAiQuestion])
+        onUpdateQuestionIndex(resumeIdx < t.interview.questions.length ? resumeIdx : currentQuestionIndex)
       }
     } else {
-      // Patient is answering a fixed base question (tagged with answerIndex)
+      // Find section being answered from the last AI question
+      const lastAi = [...conversation].reverse().find((m) => m.sender === 'ai')
+      const answeredSection = lastAi?.section || mapIndexToSection(currentQuestionIndex)
+
       const patientMsg = {
         id: `msg-patient-${msgId}`,
         sender: 'patient',
         answerIndex: currentQuestionIndex,
+        section: answeredSection,
         text,
         time: 'Just now'
       }
@@ -359,6 +420,7 @@ export default function Interview({
           sender: 'ai',
           type: 'followup',
           triggerKey: trigger.key,
+          section: answeredSection,
           text: followUpText,
           time: 'Just now'
         }
@@ -366,6 +428,7 @@ export default function Interview({
         onUpdateConversation([...conversation, patientMsg, aiFollowUpMsg])
         setPendingFollowUp({
           key: trigger.key,
+          section: answeredSection,
           resumeIndex: currentQuestionIndex + 1
         })
         // Note: We do NOT advance currentQuestionIndex until follow-up is answered
@@ -373,8 +436,9 @@ export default function Interview({
         // Normal question advance
         const nextIndex = currentQuestionIndex + 1
         const updatedMessages = [...conversation, patientMsg]
+        const nextSection = getNextIncompleteSection(updatedMessages)
 
-        if (nextIndex < t.interview.questions.length) {
+        if (nextSection && (nextIndex < t.interview.questions.length || nextSection)) {
           onUpdateConversation(updatedMessages)
           setIsAiThinking(true)
           let dynamicAiReply = null
@@ -390,7 +454,8 @@ export default function Interview({
             const aiResponse = await sendMessageToAI({
               message: text,
               language: activeLang === 'Hindi' ? 'hi' : 'en',
-              conversation: conversationForAi
+              conversation: conversationForAi,
+              currentSection: nextSection
             })
 
             if (aiResponse?.data?.reply) {
@@ -403,17 +468,23 @@ export default function Interview({
             setIsAiThinking(false)
           }
 
+          const fallbackText =
+            getFallbackQuestionForSection(nextSection, activeLang) ||
+            t.interview.questions[nextIndex] ||
+            t.interview.questions[t.interview.questions.length - 1]
+
           const nextAiQuestion = {
             id: `msg-ai-${msgId + 1}`,
             sender: 'ai',
             type: 'question',
-            questionIndex: nextIndex,
+            section: nextSection,
+            questionIndex: nextIndex < t.interview.questions.length ? nextIndex : t.interview.questions.length - 1,
             isAiGenerated: Boolean(dynamicAiReply),
-            text: dynamicAiReply || t.interview.questions[nextIndex],
+            text: dynamicAiReply || t.interview.questions[nextIndex] || fallbackText,
             time: 'Just now'
           }
           onUpdateConversation([...updatedMessages, nextAiQuestion])
-          onUpdateQuestionIndex(nextIndex)
+          onUpdateQuestionIndex(nextIndex < t.interview.questions.length ? nextIndex : currentQuestionIndex)
         } else {
           const completionMsg = {
             id: `msg-ai-final-${msgId + 1}`,
@@ -454,10 +525,17 @@ export default function Interview({
     }
   }
 
+  // Get active section from the latest AI message
+  const activeAiMsg = [...conversation].reverse().find((m) => m.sender === 'ai')
+  const currentActiveSection = activeAiMsg?.section || mapIndexToSection(currentQuestionIndex)
+  const sectionSuggestions = currentActiveSection ? getQuickSuggestionsForSection(currentActiveSection, activeLang) : []
+
   const currentSuggestions = isFinished
     ? []
     : pendingFollowUp
     ? (t.interview.followUpQuickReplies || ['Yes', 'No', 'Not sure'])
+    : sectionSuggestions.length > 0
+    ? sectionSuggestions
     : currentQuestionIndex < t.interview.quickSuggestions.length
     ? t.interview.quickSuggestions[currentQuestionIndex]
     : []
@@ -502,6 +580,28 @@ export default function Interview({
   const handleFinish = () => {
     cancelSpeech()
     stopListening()
+
+    // Guard: Verify all required clinical sections are actually completed
+    const missingSection = getNextIncompleteSection(conversation)
+    if (missingSection) {
+      // Incomplete sections remain! Do NOT terminate early.
+      onSetFinished(false)
+      const fallbackQuestion = getFallbackQuestionForSection(missingSection, activeLang)
+      const msgId = msgIdCounterRef.current++
+      const guardedAiQuestion = {
+        id: `msg-ai-guard-${msgId}`,
+        sender: 'ai',
+        type: 'question',
+        section: missingSection,
+        questionIndex: currentQuestionIndex,
+        isAiGenerated: false,
+        text: fallbackQuestion,
+        time: 'Just now'
+      }
+      onUpdateConversation([...conversation, guardedAiQuestion])
+      return
+    }
+
     finishAndGenerateSummary()
   }
 

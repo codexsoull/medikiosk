@@ -12,7 +12,7 @@ Your job is to convert a completed patient intake interview transcript into a st
 CLINICAL GUARDRAILS:
 1. Extract ONLY information actually stated or confirmed by the patient.
 2. DO NOT invent, assume, extrapolate, or hallucinate any symptoms, durations, medications, or history.
-3. If an item was not mentioned or asked about, write "Not reported".
+3. If the patient explicitly denies having allergies (e.g. 'none', 'no known allergies', 'no allergies'), record "No known allergies". If the patient denies chronic illness, record "None reported". If the patient denies regular medications, record "None reported". If the patient denies family medical history, record "No significant family history reported". If the patient denies smoking/alcohol, record "Non-smoker, non-alcoholic". ONLY write "Not reported" if the topic was completely omitted or not asked.
 4. DO NOT provide any clinical diagnosis.
 5. DO NOT prescribe or recommend any medications, dosages, or treatments.
 6. Preserve crucial patient-reported symptom characteristics (e.g. onset, severity, quality, radiation).
@@ -37,12 +37,12 @@ REQUIRED JSON SCHEMA:
   "pastSurgicalHistory": "Previous surgeries or hospitalizations (or Not reported)",
   "medications": "Current regular medications reported (or None reported / Not reported)",
   "allergies": "Known drug/food allergies reported (or No known allergies / Not reported)",
-  "familyHistory": "Relevant family medical history (or Not reported)",
+  "familyHistory": "Relevant family medical history e.g. Hypertension in father, or No significant family history reported / Not reported",
   "personalHistory": {
     "diet": "Dietary habits e.g. Vegetarian (or Not reported)",
     "sleep": "Sleep pattern (or Not reported)",
-    "smoking": "Smoking or tobacco use status (or Not reported)",
-    "alcohol": "Alcohol use status (or Not reported)",
+    "smoking": "Smoking or tobacco use status e.g. Non-smoker (or Not reported)",
+    "alcohol": "Alcohol use status e.g. Non-alcoholic (or Not reported)",
     "activity": "Physical activity (or Not reported)"
   },
   "reviewOfSystems": "Pertinent positive or negative systemic symptoms mentioned (or Not reported)",
@@ -75,7 +75,9 @@ function formatHpiText(hpi = {}) {
  * Formats structured personal history object into a readable string
  */
 function formatPersonalHistoryText(personal = {}) {
-  if (!personal || typeof personal !== 'object') return 'Not reported'
+  if (!personal) return 'Not reported'
+  if (typeof personal === 'string') return personal.trim() || 'Not reported'
+  if (typeof personal !== 'object') return 'Not reported'
 
   const items = []
   if (personal.diet && personal.diet !== 'Not reported') items.push(`Diet: ${personal.diet}`)
@@ -136,9 +138,9 @@ export async function generateClinicalSummary({ conversation = [], language = 'e
   const model = process.env.AI_MODEL || 'openai/gpt-oss-120b'
   const groq = getGroqClient()
 
-  // Bounded conversation history to conserve tokens (last 15 messages max)
+  // Bounded conversation history to conserve tokens (last 30 messages max)
   const boundedConversation = (Array.isArray(conversation) ? conversation : [])
-    .slice(-15)
+    .slice(-30)
     .filter((m) => m && typeof m.content === 'string' && m.content.trim().length > 0)
     .map((m) => `${m.role === 'user' || m.role === 'patient' ? 'Patient' : 'MediKiosk'}: ${m.content.trim()}`)
     .join('\n')

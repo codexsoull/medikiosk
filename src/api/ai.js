@@ -15,17 +15,22 @@ const API_BASE_URL =
  * @param {Array<Object>} [params.conversation=[]] - Prior conversation messages
  * @returns {Promise<Object>} API response: { status: 'success', data: { reply, language } }
  */
-export async function sendMessageToAI({ message, language = 'en', conversation = [] }) {
+export async function sendMessageToAI({ message, language = 'en', conversation = [], currentSection }) {
+  const payload = {
+    message,
+    language: language === 'Hindi' || language === 'hi' ? 'hi' : 'en',
+    conversation
+  }
+  if (currentSection) {
+    payload.currentSection = currentSection
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/ai/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      message,
-      language: language === 'Hindi' || language === 'hi' ? 'hi' : 'en',
-      conversation
-    })
+    body: JSON.stringify(payload)
   })
 
   let data

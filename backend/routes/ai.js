@@ -6,6 +6,17 @@ const router = express.Router()
 
 const SUPPORTED_LANGUAGES = ['en', 'hi']
 
+const ALLOWED_SECTIONS = [
+  'chiefComplaint',
+  'hpi',
+  'pastMedicalHistory',
+  'medications',
+  'allergies',
+  'familyHistory',
+  'personalHistory',
+  'reviewOfSystems'
+]
+
 /**
  * Deterministic test endpoint for AI backend integration
  * POST /api/ai/test
@@ -58,11 +69,12 @@ router.post(['/test', '/ai/test'], (req, res) => {
  * {
  *   "message": string (required, non-empty),
  *   "language": "en" | "hi" (optional, default: "en"),
- *   "conversation": Array<{ role: 'user' | 'assistant', content: string }> (optional)
+ *   "conversation": Array<{ role: 'user' | 'assistant', content: string }> (optional),
+ *   "currentSection": string (optional)
  * }
  */
 router.post(['/chat', '/ai/chat'], async (req, res) => {
-  const { message, language, conversation } = req.body || {}
+  const { message, language, conversation, currentSection } = req.body || {}
 
   // 1. Validate message
   if (!message || typeof message !== 'string' || !message.trim()) {
@@ -84,7 +96,19 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
     resolvedLanguage = language.toLowerCase().trim()
   }
 
-  // 3. Validate conversation if supplied
+  // 3. Validate currentSection if provided
+  let resolvedSection = undefined
+  if (currentSection !== undefined && currentSection !== null) {
+    if (typeof currentSection !== 'string' || !ALLOWED_SECTIONS.includes(currentSection.trim())) {
+      return res.status(400).json({
+        status: 'error',
+        message: `Validation error: Invalid currentSection "${currentSection}". Allowed sections are: ${ALLOWED_SECTIONS.join(', ')}`
+      })
+    }
+    resolvedSection = currentSection.trim()
+  }
+
+  // 4. Validate conversation if supplied
   let sanitizedConversation = []
   if (conversation !== undefined && conversation !== null) {
     if (!Array.isArray(conversation)) {
@@ -101,19 +125,21 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
     })).filter((item) => item.content.length > 0)
   }
 
-  // 4. Generate AI response via service
+  // 5. Generate AI response via service
   try {
     const result = await generateInterviewResponse({
       message: message.trim(),
       language: resolvedLanguage,
-      conversation: sanitizedConversation
+      conversation: sanitizedConversation,
+      currentSection: resolvedSection
     })
 
     return res.status(200).json({
       status: 'success',
       data: {
         reply: result.reply,
-        language: result.language
+        language: result.language,
+        currentSection: resolvedSection
       }
     })
   } catch (error) {
