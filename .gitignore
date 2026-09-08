@@ -67,3 +67,11 @@ Thumbs.db
 backend/*.db
 backend/*.db-shm
 backend/*.db-wal
+
+# =========================
+# OCR Traineddata Models
+# =========================
+*.traineddata
+*.traineddata.gz
+backend/*.traineddata
+backend/*.traineddata.gz

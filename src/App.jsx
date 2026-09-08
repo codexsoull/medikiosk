@@ -460,7 +460,10 @@ export default function App() {
           <DocumentUpload
             uploadedDocuments={caseData.documents}
             onUpdateDocuments={(docs) =>
-              setCaseData((prev) => ({ ...prev, documents: docs }))
+              setCaseData((prev) => ({
+                ...prev,
+                documents: typeof docs === 'function' ? docs(prev.documents || []) : docs
+              }))
             }
             onContinue={handleUploadContinue}
             onSkip={handleUploadContinue}

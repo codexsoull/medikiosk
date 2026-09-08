@@ -4,6 +4,7 @@ import dotenv from 'dotenv'
 import healthRoutes from './routes/health.js'
 import casesRoutes from './routes/cases.js'
 import aiRoutes from './routes/ai.js'
+import documentsRoutes from './routes/documents.js'
 import './database/db.js' // Auto-initialize SQLite database & tables
 
 // Load environment variables from .env
@@ -12,8 +13,8 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// JSON body parsing middleware
-app.use(express.json())
+// JSON body parsing middleware with 15MB limit for medical documents
+app.use(express.json({ limit: '15mb' }))
 
 // CORS middleware allowing React frontend origin
 const allowedOrigins = [
@@ -39,6 +40,7 @@ app.use(
 app.use('/api', healthRoutes)
 app.use('/api', casesRoutes)
 app.use('/api/ai', aiRoutes)
+app.use('/api/documents', documentsRoutes)
 
 // Root fallback route for convenience
 app.get('/', (req, res) => {

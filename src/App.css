@@ -1635,11 +1635,35 @@
   margin-top: 4px;
 }
 
+.doc-ocr-notice.completed {
+  color: var(--success, #16a34a);
+}
+
+.doc-ocr-notice.failed {
+  color: var(--danger, #dc2626);
+}
+
+.doc-ocr-notice.extracting {
+  color: var(--primary, #2563eb);
+}
+
 .ocr-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background-color: var(--warning);
+}
+
+.ocr-dot.completed {
+  background-color: var(--success, #16a34a);
+}
+
+.ocr-dot.failed {
+  background-color: var(--danger, #dc2626);
+}
+
+.ocr-dot.extracting {
+  background-color: var(--primary, #2563eb);
 }
 
 .remove-doc-btn {

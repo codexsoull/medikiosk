@@ -1,6 +1,7 @@
 import React, { useRef } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import ReadAloud from '../components/ReadAloud'
+import { processDocumentAPI } from '../api/documents'
 
 // SVG upload icon
 const UploadIcon = () => (
@@ -51,30 +52,105 @@ export default function DocumentUpload({
 }) {
   const fileInputRef = useRef(null)
 
+  const readFileAsBase64 = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result)
+      reader.onerror = () => resolve(null)
+      reader.readAsDataURL(file)
+    })
+  }
+
   const handleFilesAdded = (files) => {
     if (!files || files.length === 0) return
 
-    const newDocs = Array.from(files).map((file, idx) => {
+    const fileList = Array.from(files)
+    const newDocs = fileList.map((file, idx) => {
       const ext = file.name.split('.').pop()?.toLowerCase() || ''
       let fileTypeLabel = 'Document'
 
-      if (['jpg', 'jpeg', 'png'].includes(ext)) {
+      if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
         fileTypeLabel = 'Image / Scan'
       } else if (ext === 'pdf') {
         fileTypeLabel = 'PDF Report'
       }
 
       return {
-        id: `doc-${Date.now()}-${idx}`,
+        id: `doc-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
         name: file.name,
         size: (file.size / 1024).toFixed(1) + ' KB',
+        rawSize: file.size,
+        mimeType: file.type,
         type: fileTypeLabel,
         uploadDate: new Date().toLocaleDateString(),
-        ocrStatus: 'Pending OCR integration'
+        ocrStatus: 'Extracting text...',
+        extractionStatus: 'extracting',
+        extractedText: '',
+        characterCount: 0,
+        extractionMethod: 'none'
       }
     })
 
-    onUpdateDocuments([...uploadedDocuments, ...newDocs])
+    // Immediately add files to UI with extracting state
+    onUpdateDocuments((prevDocs) => [...(Array.isArray(prevDocs) ? prevDocs : uploadedDocuments), ...newDocs])
+
+    // Asynchronously read and extract text for each document
+    fileList.forEach((file, idx) => {
+      const targetDoc = newDocs[idx]
+      readFileAsBase64(file).then((base64Content) => {
+        if (!base64Content) {
+          onUpdateDocuments((prevDocs) =>
+            prevDocs.map((d) =>
+              d.id === targetDoc.id
+                ? {
+                    ...d,
+                    extractionStatus: 'failed',
+                    ocrStatus: 'Could not extract text'
+                  }
+                : d
+            )
+          )
+          return
+        }
+
+        processDocumentAPI({
+          originalName: file.name,
+          mimeType: file.type,
+          size: file.size,
+          content: base64Content
+        })
+          .then((res) => {
+            const data = res?.data || {}
+            onUpdateDocuments((prevDocs) =>
+              prevDocs.map((d) =>
+                d.id === targetDoc.id
+                  ? {
+                      ...d,
+                      extractionStatus: data.extractionStatus || 'completed',
+                      extractedText: data.extractedText || '',
+                      characterCount: data.characterCount || 0,
+                      extractionMethod: data.extractionMethod || 'none',
+                      ocrStatus: 'Text extracted'
+                    }
+                  : d
+              )
+            )
+          })
+          .catch(() => {
+            onUpdateDocuments((prevDocs) =>
+              prevDocs.map((d) =>
+                d.id === targetDoc.id
+                  ? {
+                      ...d,
+                      extractionStatus: 'failed',
+                      ocrStatus: 'Could not extract text'
+                    }
+                  : d
+              )
+            )
+          })
+      })
+    })
   }
 
   const handleFileInputChange = (e) => {
@@ -85,7 +161,9 @@ export default function DocumentUpload({
   }
 
   const handleRemoveDoc = (idToRemove) => {
-    onUpdateDocuments(uploadedDocuments.filter((doc) => doc.id !== idToRemove))
+    onUpdateDocuments((prevDocs) =>
+      (Array.isArray(prevDocs) ? prevDocs : uploadedDocuments).filter((doc) => doc.id !== idToRemove)
+    )
   }
 
   const handleDrop = (e) => {
@@ -102,15 +180,24 @@ export default function DocumentUpload({
   }
 
   const handleAddSample = (sampleName, sampleSize, sampleType) => {
+    const isPdf = sampleType.includes('PDF')
+    const sampleText = isPdf
+      ? 'COMPLETE BLOOD COUNT (CBC)\nHb: 13.2 g/dL\nWBC: 6,800 /mcL\nPlatelets: 2.4 Lakh\nRBC: 4.6 million/mcL'
+      : 'OPD PRESCRIPTION\nPatient Name: Test Patient\nChief Complaint: Headache since yesterday.\nMedication: Paracetamol 500mg\nBlood Pressure: 120/80 mmHg'
+
     const newDoc = {
       id: `doc-sample-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       name: sampleName,
       size: sampleSize,
       type: sampleType,
       uploadDate: new Date().toLocaleDateString(),
-      ocrStatus: 'Pending OCR integration'
+      ocrStatus: 'Text extracted',
+      extractionStatus: 'completed',
+      extractedText: sampleText,
+      characterCount: sampleText.length,
+      extractionMethod: isPdf ? 'pdf-text' : 'ocr'
     }
-    onUpdateDocuments([...uploadedDocuments, newDoc])
+    onUpdateDocuments((prevDocs) => [...(Array.isArray(prevDocs) ? prevDocs : uploadedDocuments), newDoc])
   }
 
   return (
@@ -153,7 +240,7 @@ export default function DocumentUpload({
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".pdf,image/jpeg,image/png,image/jpg"
+          accept=".pdf,image/jpeg,image/png,image/jpg,image/webp,.webp"
           onChange={handleFileInputChange}
           style={{ display: 'none' }}
         />
@@ -230,9 +317,25 @@ export default function DocumentUpload({
                     <span>•</span>
                     <span>{doc.type}</span>
                   </div>
-                  <div className="doc-ocr-notice">
-                    <span className="ocr-dot"></span>
-                    <span>{t.upload.ocrNotice}</span>
+                  <div className={`doc-ocr-notice ${doc.extractionStatus || 'pending'}`}>
+                    <span className={`ocr-dot ${doc.extractionStatus || 'pending'}`}></span>
+                    <span>
+                      {doc.extractionStatus === 'completed'
+                        ? (language === 'Hindi'
+                            ? `✓ पाठ निकाला गया (${doc.characterCount || doc.extractedText?.length || 0} अक्षर)`
+                            : `✓ Text extracted (${doc.characterCount || doc.extractedText?.length || 0} chars)`)
+                        : doc.extractionStatus === 'extracting'
+                        ? (language === 'Hindi'
+                            ? 'पाठ निकाला जा रहा है...'
+                            : 'Extracting text...')
+                        : doc.extractionStatus === 'failed'
+                        ? (language === 'Hindi'
+                            ? '⚠ पाठ नहीं निकाला जा सका'
+                            : '⚠ Could not extract text')
+                        : (language === 'Hindi'
+                            ? 'पाठ निष्कर्षण लंबित'
+                            : 'Pending text extraction')}
+                    </span>
                   </div>
                 </div>
                 <button
