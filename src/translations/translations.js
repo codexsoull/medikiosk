@@ -129,7 +129,6 @@ export const translations = {
         'Are you experiencing any other symptoms?',
         'Do you have any previous medical conditions?',
         'Are you currently taking any medications?',
-        'Do you have any known allergies?'
         'Do you have any known allergies?',
         'Does anyone in your family have major medical conditions (like diabetes, heart disease, or hypertension)?',
         'Do you consume tobacco, smoke, or drink alcohol, and how is your daily diet and sleep?',
@@ -438,7 +437,6 @@ export const translations = {
         'क्या आपको कोई अन्य लक्षण हो रहे हैं?',
         'क्या आपको पहले से कोई बीमारी है?',
         'क्या आप वर्तमान में कोई दवा ले रहे हैं?',
-        'क्या आपको किसी चीज़ से एलर्जी है?'
         'क्या आपको किसी चीज़ से एलर्जी है?',
         'क्या आपके परिवार में किसी को कोई बड़ी बीमारी है (जैसे शुगर, दिल की बीमारी, या बीपी)?',
         'क्या आप तंबाकू, धूम्रपान या शराब का सेवन करते हैं, और आपका खान-पान व नींद कैसी है?',

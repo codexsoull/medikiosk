@@ -75,7 +75,6 @@ router.post(['/test', '/ai/test'], (req, res) => {
  * }
  */
 router.post(['/chat', '/ai/chat'], async (req, res) => {
-  const { message, language, conversation } = req.body || {}
   const { message, language, conversation, currentSection } = req.body || {}
 
   // 1. Validate message
@@ -98,7 +97,6 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
     resolvedLanguage = language.toLowerCase().trim()
   }
 
-  // 3. Validate conversation if supplied
   // 3. Validate currentSection if provided
   let resolvedSection = undefined
   if (currentSection !== undefined && currentSection !== null) {
@@ -128,13 +126,11 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
     })).filter((item) => item.content.length > 0)
   }
 
-  // 4. Generate AI response via service
   // 5. Generate AI response via service
   try {
     const result = await generateInterviewResponse({
       message: message.trim(),
       language: resolvedLanguage,
-      conversation: sanitizedConversation
       conversation: sanitizedConversation,
       currentSection: resolvedSection
     })
@@ -143,7 +139,6 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
       status: 'success',
       data: {
         reply: result.reply,
-        language: result.language
         language: result.language,
         currentSection: resolvedSection
       }
@@ -166,17 +161,18 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
 })
 
 /**
- * AI-powered structured clinical summary generation from patient interview
+ * AI-powered structured clinical summary generation from patient interview and optional documents
  * POST /api/ai/summary
  *
  * Body:
  * {
  *   "conversation": Array<{ role: 'user' | 'assistant', content: string }> (required, non-empty),
+ *   "documents": Array<{ originalName: string, fileType: string, extractionStatus: string, extractedText: string }> (optional),
  *   "language": "en" | "hi" (optional, default: "en")
  * }
  */
 router.post(['/summary', '/ai/summary'], async (req, res) => {
-  const { conversation, language } = req.body || {}
+  const { conversation, language, documents } = req.body || {}
 
   // 1. Validate conversation is a non-empty array
   if (!conversation || !Array.isArray(conversation) || conversation.length === 0) {
@@ -198,7 +194,15 @@ router.post(['/summary', '/ai/summary'], async (req, res) => {
     resolvedLanguage = language.toLowerCase().trim()
   }
 
-  // 3. Filter valid messages from conversation
+  // 3. Validate documents if supplied
+  if (documents !== undefined && documents !== null && !Array.isArray(documents)) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Validation error: "documents" must be an array'
+    })
+  }
+
+  // 4. Filter valid messages from conversation
   const sanitizedConversation = conversation
     .filter((m) => m && typeof m.content === 'string' && m.content.trim().length > 0)
     .map((m) => ({
@@ -213,10 +217,11 @@ router.post(['/summary', '/ai/summary'], async (req, res) => {
     })
   }
 
-  // 4. Generate structured clinical summary via service
+  // 5. Generate structured clinical summary via service
   try {
     const summary = await generateClinicalSummary({
       conversation: sanitizedConversation,
+      documents: Array.isArray(documents) ? documents : [],
       language: resolvedLanguage
     })
 

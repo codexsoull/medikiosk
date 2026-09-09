@@ -219,7 +219,6 @@ export function generateStructuredSummaryFromAnswers(answersByIndex = [], option
   }
 
   let personalHistory = 'Non-smoker, non-alcoholic. Regular sleep and dietary pattern reported.'
-  if (hasSmoking && hasAlcohol) {
   if (q9) {
     if (['none', 'no', 'non-smoker, non-alcoholic', 'धूम्रपान या शराब नहीं लेते'].includes(q9.toLowerCase())) {
       personalHistory = 'Non-smoker, non-alcoholic. Regular sleep and dietary pattern reported.'
@@ -247,10 +246,8 @@ export function generateStructuredSummaryFromAnswers(answersByIndex = [], option
       pastMedicalHistory: pmh,
       medications: meds,
       allergies: allergies,
-      familyHistory: 'No significant family history of hereditary illnesses reported.',
       familyHistory: familyHistory,
       personalHistory: personalHistory,
-      reviewOfSystems: 'Cardiovascular: Normal rhythm. Respiratory: Clear. GI: No acute complaints. CNS: Alert & Oriented.'
       reviewOfSystems: reviewOfSystems
     },
     clinicalAlerts

@@ -124,7 +124,6 @@ function parseReply(rawContent) {
  * @param {string} [params.currentSection] - Currently active clinical section
  * @returns {Promise<{ reply: string, language: string }>}
  */
-export async function generateInterviewResponse({ message, language = 'en', conversation = [] }) {
 export async function generateInterviewResponse({ message, language = 'en', conversation = [], currentSection }) {
   const provider = process.env.AI_PROVIDER || 'groq'
   const model = process.env.AI_MODEL || 'openai/gpt-oss-120b'
@@ -136,8 +135,6 @@ export async function generateInterviewResponse({ message, language = 'en', conv
 
   const groq = getGroqClient()
 
-  // Build system prompt
-  const systemPrompt = SYSTEM_INSTRUCTIONS[activeLang] || SYSTEM_INSTRUCTIONS.en
   // Build system prompt with section guidance if currentSection provided
   let systemPrompt = SYSTEM_INSTRUCTIONS[activeLang] || SYSTEM_INSTRUCTIONS.en
   if (currentSection && SECTION_PROMPT_GUIDANCE[activeLang]?.[currentSection]) {

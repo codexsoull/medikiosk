@@ -15,7 +15,6 @@ const API_BASE_URL =
  * @param {Array<Object>} [params.conversation=[]] - Prior conversation messages
  * @returns {Promise<Object>} API response: { status: 'success', data: { reply, language } }
  */
-export async function sendMessageToAI({ message, language = 'en', conversation = [] }) {
 export async function sendMessageToAI({ message, language = 'en', conversation = [], currentSection }) {
   const payload = {
     message,
@@ -31,11 +30,6 @@ export async function sendMessageToAI({ message, language = 'en', conversation =
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      message,
-      language: language === 'Hindi' || language === 'hi' ? 'hi' : 'en',
-      conversation
-    })
     body: JSON.stringify(payload)
   })
 
