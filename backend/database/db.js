@@ -26,6 +26,17 @@ if (fs.existsSync(schemaPath)) {
   db.exec(schemaSql)
 }
 
+// Ensure backward-compatible documents column exists on cases table
+try {
+  const columns = db.pragma('table_info(cases)')
+  const hasDocuments = Array.isArray(columns) && columns.some((c) => c.name === 'documents')
+  if (!hasDocuments) {
+    db.exec('ALTER TABLE cases ADD COLUMN documents TEXT')
+  }
+} catch (err) {
+  console.warn('Migration warning for documents column:', err.message)
+}
+
 /**
  * Generates next sequential human-readable case ID (e.g. CASE-0001)
  */
@@ -43,6 +54,7 @@ export function formatCaseRow(row) {
 
   let ai_summary = row.ai_summary
   let clinical_alerts = row.clinical_alerts
+  let documents = []
 
   if (typeof ai_summary === 'string' && (ai_summary.startsWith('{') || ai_summary.startsWith('['))) {
     try {
@@ -60,10 +72,24 @@ export function formatCaseRow(row) {
     }
   }
 
+  if (row.documents) {
+    if (typeof row.documents === 'string') {
+      try {
+        const parsed = JSON.parse(row.documents)
+        documents = Array.isArray(parsed) ? parsed : []
+      } catch {
+        documents = []
+      }
+    } else if (Array.isArray(row.documents)) {
+      documents = row.documents
+    }
+  }
+
   return {
     ...row,
     ai_summary,
-    clinical_alerts
+    clinical_alerts,
+    documents
   }
 }
 

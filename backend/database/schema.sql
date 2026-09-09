@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS cases (
   clinical_alerts TEXT,
   doctor_notes TEXT,
   case_status TEXT DEFAULT 'ready_for_doctor',
+  documents TEXT,
   created_at TEXT DEFAULT (datetime('now', 'localtime')),
   updated_at TEXT DEFAULT (datetime('now', 'localtime'))
 );

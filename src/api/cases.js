@@ -142,6 +142,7 @@ export function mapBackendCaseToFrontend(row) {
   }
 
   // Ensure clinical_alerts is an array
+  // Ensure clinical_alerts is an array
   let clinicalAlerts = row.clinical_alerts
   if (typeof clinicalAlerts === 'string') {
     try {
@@ -153,6 +154,97 @@ export function mapBackendCaseToFrontend(row) {
   if (!Array.isArray(clinicalAlerts)) {
     clinicalAlerts = []
   }
+
+  // Safely parse and normalize documents array
+  let rawDocs = row.documents
+  if (typeof rawDocs === 'string') {
+    try {
+      rawDocs = JSON.parse(rawDocs)
+    } catch {
+      rawDocs = []
+    }
+  }
+  if (!Array.isArray(rawDocs)) {
+    rawDocs = []
+  }
+
+  const documents = rawDocs
+    .map((doc, idx) => {
+      if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return null
+
+      const originalName = (
+        (typeof doc.originalName === 'string' && doc.originalName.trim()) ||
+        (typeof doc.name === 'string' && doc.name.trim()) ||
+        `Document ${idx + 1}`
+      )
+
+      const mimeType = (
+        (typeof doc.mimeType === 'string' && doc.mimeType.trim()) ||
+        (originalName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/png')
+      )
+
+      const fileType = (
+        (typeof doc.fileType === 'string' && doc.fileType.trim()) ||
+        (mimeType.includes('pdf') ? 'pdf' : 'image')
+      )
+
+      const category = (
+        (typeof doc.category === 'string' && doc.category.trim()) ||
+        fileType
+      )
+
+      const rawBytes = (
+        typeof doc.size === 'number'
+          ? doc.size
+          : typeof doc.rawSize === 'number'
+          ? doc.rawSize
+          : 0
+      )
+
+      const formattedSize = rawBytes > 0
+        ? (rawBytes / 1024 >= 1024
+            ? `${(rawBytes / (1024 * 1024)).toFixed(1)} MB`
+            : `${(rawBytes / 1024).toFixed(1)} KB`)
+        : (typeof doc.size === 'string' ? doc.size : '—')
+
+      const extractionStatus = (
+        (typeof doc.extractionStatus === 'string' && doc.extractionStatus.trim()) ||
+        'completed'
+      )
+
+      const extractedText = typeof doc.extractedText === 'string' ? doc.extractedText : ''
+      const characterCount = typeof doc.characterCount === 'number'
+        ? doc.characterCount
+        : extractedText.length
+
+      const extractionMethod = (
+        (typeof doc.extractionMethod === 'string' && doc.extractionMethod.trim()) ||
+        (fileType === 'pdf' ? 'pdf-text' : 'ocr')
+      )
+
+      const processedAt = (
+        (typeof doc.processedAt === 'string' && doc.processedAt.trim()) ||
+        (typeof doc.uploadDate === 'string' && doc.uploadDate.trim()) ||
+        ''
+      )
+
+      return {
+        id: doc.id || `doc-${idx + 1}`,
+        originalName,
+        name: originalName,
+        mimeType,
+        fileType,
+        category,
+        size: rawBytes,
+        formattedSize,
+        extractionStatus,
+        extractedText,
+        characterCount,
+        extractionMethod,
+        processedAt
+      }
+    })
+    .filter(Boolean)
 
   return {
     id: row.id,
@@ -192,7 +284,7 @@ export function mapBackendCaseToFrontend(row) {
       isAiDraft: Boolean(summary.isAiDraft)
     },
     clinicalAlerts: clinicalAlerts,
-    documents: [],
+    documents: documents,
     doctor_notes: row.doctor_notes || '',
     physicianNotes: row.doctor_notes || ''
   }

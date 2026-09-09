@@ -96,6 +96,96 @@ router.post('/cases', (req, res) => {
     const doctor_notes = body.doctor_notes || body.physicianNotes || null
     const case_status = body.case_status || body.status || 'ready_for_doctor'
 
+    // Handle documents serialization
+    let rawDocuments = body.documents || body.uploadedDocuments || []
+    if (typeof rawDocuments === 'string') {
+      try {
+        rawDocuments = JSON.parse(rawDocuments)
+      } catch {
+        rawDocuments = []
+      }
+    }
+
+    let documents = null
+    if (Array.isArray(rawDocuments) && rawDocuments.length > 0) {
+      const sanitizedDocs = rawDocuments
+        .map((doc, idx) => {
+          if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return null
+
+          const originalName = (
+            (typeof doc.originalName === 'string' && doc.originalName.trim()) ||
+            (typeof doc.name === 'string' && doc.name.trim()) ||
+            `document_${idx + 1}`
+          )
+
+          const mimeType = (
+            (typeof doc.mimeType === 'string' && doc.mimeType.trim()) ||
+            (typeof doc.type === 'string' && doc.type.includes('/') ? doc.type.trim() : null) ||
+            (originalName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 'image/png')
+          )
+
+          const fileType = (
+            (typeof doc.fileType === 'string' && doc.fileType.trim()) ||
+            (mimeType.includes('pdf') ? 'pdf' : 'image')
+          )
+
+          const category = (
+            (typeof doc.category === 'string' && doc.category.trim()) ||
+            fileType
+          )
+
+          const size = (
+            typeof doc.size === 'number'
+              ? doc.size
+              : typeof doc.rawSize === 'number'
+              ? doc.rawSize
+              : 0
+          )
+
+          const extractionStatus = (
+            (typeof doc.extractionStatus === 'string' && doc.extractionStatus.trim()) ||
+            'completed'
+          )
+
+          const extractedText = (
+            typeof doc.extractedText === 'string' ? doc.extractedText : ''
+          )
+
+          const characterCount = (
+            typeof doc.characterCount === 'number'
+              ? doc.characterCount
+              : extractedText.length
+          )
+
+          const extractionMethod = (
+            (typeof doc.extractionMethod === 'string' && doc.extractionMethod.trim()) ||
+            (fileType === 'pdf' ? 'pdf-text' : 'ocr')
+          )
+
+          const processedAt = (
+            (typeof doc.processedAt === 'string' && doc.processedAt.trim()) ||
+            (typeof doc.uploadDate === 'string' && doc.uploadDate.trim()) ||
+            new Date().toISOString()
+          )
+
+          return {
+            originalName,
+            mimeType,
+            fileType,
+            category,
+            size,
+            extractionStatus,
+            extractedText,
+            characterCount,
+            extractionMethod,
+            processedAt
+          }
+        })
+        .filter(Boolean)
+
+      documents = JSON.stringify(sanitizedDocs)
+    }
+
     // Generate or validate unique case ID
     let case_id = body.case_id || body.caseId
     if (case_id) {
@@ -125,8 +215,9 @@ router.post('/cases', (req, res) => {
         ai_summary,
         clinical_alerts,
         doctor_notes,
-        case_status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        case_status,
+        documents
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
 
     const info = insertStmt.run(
@@ -146,7 +237,8 @@ router.post('/cases', (req, res) => {
       ai_summary,
       clinical_alerts,
       doctor_notes,
-      case_status
+      case_status,
+      documents
     )
 
     const createdRow = db.prepare('SELECT * FROM cases WHERE id = ?').get(info.lastInsertRowid)

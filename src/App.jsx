@@ -246,7 +246,19 @@ export default function App() {
         ai_summary: caseData.summary || {},
         clinical_alerts: caseData.clinicalAlerts || [],
         doctor_notes: caseData.physicianNotes || '',
-        case_status: 'ready_for_doctor'
+        case_status: 'ready_for_doctor',
+        documents: (caseData.documents || []).map((doc) => ({
+          originalName: doc.name || doc.originalName || 'Medical Document',
+          mimeType: doc.mimeType || (doc.type === 'PDF Report' ? 'application/pdf' : 'image/png'),
+          fileType: doc.fileType || (doc.type === 'PDF Report' ? 'pdf' : 'image'),
+          category: doc.category || (doc.type === 'PDF Report' ? 'pdf' : 'image'),
+          size: typeof doc.rawSize === 'number' ? doc.rawSize : (typeof doc.size === 'number' ? doc.size : 0),
+          extractionStatus: doc.extractionStatus || 'completed',
+          extractedText: doc.extractedText || '',
+          characterCount: typeof doc.characterCount === 'number' ? doc.characterCount : (doc.extractedText?.length || 0),
+          extractionMethod: doc.extractionMethod || 'none',
+          processedAt: doc.processedAt || doc.uploadDate || new Date().toISOString()
+        }))
       }
 
       const result = await createCase(payload)
