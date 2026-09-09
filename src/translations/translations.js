@@ -129,6 +129,7 @@ export const translations = {
         'Are you experiencing any other symptoms?',
         'Do you have any previous medical conditions?',
         'Are you currently taking any medications?',
+        'Do you have any known allergies?'
         'Do you have any known allergies?',
         'Does anyone in your family have major medical conditions (like diabetes, heart disease, or hypertension)?',
         'Do you consume tobacco, smoke, or drink alcohol, and how is your daily diet and sleep?',
@@ -141,6 +142,7 @@ export const translations = {
         ['Fever', 'Nausea', 'Vomiting', 'Dizziness', 'None / No other symptoms'],
         ['None', 'Diabetes', 'Hypertension (BP)', 'Asthma / Respiratory', 'Thyroid'],
         ['None', 'Painkillers (Paracetamol)', 'Blood Pressure Meds', 'Antacids', 'Insulin'],
+        ['No known allergies', 'Penicillin', 'Sulfa Drugs', 'Dust / Pollen', 'Food Allergy']
         ['No known allergies', 'Penicillin', 'Sulfa Drugs', 'Dust / Pollen', 'Food Allergy'],
         ['No significant family history', 'Diabetes in parents', 'Heart disease in family', 'Hypertension in family', 'Not sure'],
         ['Non-smoker, non-alcoholic', 'Smoker / Tobacco use', 'Occasional alcohol', 'Normal diet & sleep', 'Poor sleep / irregular diet'],
@@ -436,6 +438,7 @@ export const translations = {
         'क्या आपको कोई अन्य लक्षण हो रहे हैं?',
         'क्या आपको पहले से कोई बीमारी है?',
         'क्या आप वर्तमान में कोई दवा ले रहे हैं?',
+        'क्या आपको किसी चीज़ से एलर्जी है?'
         'क्या आपको किसी चीज़ से एलर्जी है?',
         'क्या आपके परिवार में किसी को कोई बड़ी बीमारी है (जैसे शुगर, दिल की बीमारी, या बीपी)?',
         'क्या आप तंबाकू, धूम्रपान या शराब का सेवन करते हैं, और आपका खान-पान व नींद कैसी है?',
@@ -448,6 +451,7 @@ export const translations = {
         ['बुखार', 'जी मिचलाना', 'उल्टी', 'चक्कर आना', 'कोई अन्य लक्षण नहीं'],
         ['कोई नहीं', 'मधुमेह (शुगर)', 'उच्च रक्तचाप (बीपी)', 'अस्थमा/सांस की तकलीफ', 'थायरॉयड'],
         ['कोई नहीं', 'दर्द निवारक (पैरासिटामोल)', 'बीपी की दवा', 'एंटासिड (गैस की दवा)', 'इंसुलिन'],
+        ['कोई ज्ञात एलर्जी नहीं', 'पेनिसिलिन', 'सल्फा दवाएं', 'धूल / पराग', 'खाद्य एलर्जी']
         ['कोई ज्ञात एलर्जी नहीं', 'पेनिसिलिन', 'सल्फा दवाएं', 'धूल / पराग', 'खाद्य एलर्जी'],
         ['परिवार में कोई गंभीर बीमारी नहीं', 'माता-पिता को मधुमेह (शुगर)', 'परिवार में हृदय रोग', 'परिवार में उच्च रक्तचाप (बीपी)', 'पक्का नहीं'],
         ['धूम्रपान या शराब नहीं लेते', 'धूम्रपान / तंबाकू का सेवन', 'कभी-कभार शराब', 'सामान्य खान-पान और नींद', 'नींद में परेशानी / अनियमित खान-पान'],

@@ -69,11 +69,13 @@ router.post(['/test', '/ai/test'], (req, res) => {
  * {
  *   "message": string (required, non-empty),
  *   "language": "en" | "hi" (optional, default: "en"),
+ *   "conversation": Array<{ role: 'user' | 'assistant', content: string }> (optional)
  *   "conversation": Array<{ role: 'user' | 'assistant', content: string }> (optional),
  *   "currentSection": string (optional)
  * }
  */
 router.post(['/chat', '/ai/chat'], async (req, res) => {
+  const { message, language, conversation } = req.body || {}
   const { message, language, conversation, currentSection } = req.body || {}
 
   // 1. Validate message
@@ -96,6 +98,7 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
     resolvedLanguage = language.toLowerCase().trim()
   }
 
+  // 3. Validate conversation if supplied
   // 3. Validate currentSection if provided
   let resolvedSection = undefined
   if (currentSection !== undefined && currentSection !== null) {
@@ -125,11 +128,13 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
     })).filter((item) => item.content.length > 0)
   }
 
+  // 4. Generate AI response via service
   // 5. Generate AI response via service
   try {
     const result = await generateInterviewResponse({
       message: message.trim(),
       language: resolvedLanguage,
+      conversation: sanitizedConversation
       conversation: sanitizedConversation,
       currentSection: resolvedSection
     })
@@ -138,6 +143,7 @@ router.post(['/chat', '/ai/chat'], async (req, res) => {
       status: 'success',
       data: {
         reply: result.reply,
+        language: result.language
         language: result.language,
         currentSection: resolvedSection
       }

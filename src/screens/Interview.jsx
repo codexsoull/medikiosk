@@ -65,6 +65,7 @@ export default function Interview({
   // Helper to resolve localized text of an AI message
   const getAiMessageText = useCallback((msg) => {
     if (!msg) return ''
+    if (msg.isAiGenerated) {
     if (msg.isAiGenerated || msg.section) {
       return msg.text || ''
     }
@@ -323,6 +324,7 @@ export default function Interview({
       const resumeIdx = pendingFollowUp.resumeIndex
       setPendingFollowUp(null)
 
+      if (resumeIdx < t.interview.questions.length) {
       const updatedWithPatient = [...conversation, patientMsg]
       const nextSection = getNextIncompleteSection(updatedWithPatient)
 
@@ -363,12 +365,15 @@ export default function Interview({
           type: 'question',
           section: nextSection,
           questionIndex: resumeIdx,
+          text: t.interview.questions[resumeIdx],
           isAiGenerated: Boolean(dynamicAiReply),
           text: dynamicAiReply || fallbackText,
           time: 'Just now'
         }
+        onUpdateConversation([...conversation, patientMsg, nextAiQuestion])
         onUpdateConversation([...updatedWithPatient, nextAiQuestion])
         onUpdateQuestionIndex(resumeIdx)
+      } else {
       } else if (!nextSection) {
         const completionMsg = {
           id: `msg-ai-final-${msgId + 1}`,
@@ -377,6 +382,7 @@ export default function Interview({
           text: `${t.interview.interviewCompleteTitle}. ${t.interview.interviewCompleteSubtitle}`,
           time: 'Just now'
         }
+        onUpdateConversation([...conversation, patientMsg, completionMsg])
         onUpdateConversation([...updatedWithPatient, completionMsg])
         onSetFinished(true)
       } else {
@@ -395,6 +401,7 @@ export default function Interview({
         onUpdateQuestionIndex(resumeIdx < t.interview.questions.length ? resumeIdx : currentQuestionIndex)
       }
     } else {
+      // Patient is answering a fixed base question (tagged with answerIndex)
       // Find section being answered from the last AI question
       const lastAi = [...conversation].reverse().find((m) => m.sender === 'ai')
       const answeredSection = lastAi?.section || mapIndexToSection(currentQuestionIndex)
@@ -438,6 +445,7 @@ export default function Interview({
         const updatedMessages = [...conversation, patientMsg]
         const nextSection = getNextIncompleteSection(updatedMessages)
 
+        if (nextIndex < t.interview.questions.length) {
         if (nextSection && (nextIndex < t.interview.questions.length || nextSection)) {
           onUpdateConversation(updatedMessages)
           setIsAiThinking(true)
@@ -454,6 +462,7 @@ export default function Interview({
             const aiResponse = await sendMessageToAI({
               message: text,
               language: activeLang === 'Hindi' ? 'hi' : 'en',
+              conversation: conversationForAi
               conversation: conversationForAi,
               currentSection: nextSection
             })
@@ -477,13 +486,16 @@ export default function Interview({
             id: `msg-ai-${msgId + 1}`,
             sender: 'ai',
             type: 'question',
+            questionIndex: nextIndex,
             section: nextSection,
             questionIndex: nextIndex < t.interview.questions.length ? nextIndex : t.interview.questions.length - 1,
             isAiGenerated: Boolean(dynamicAiReply),
+            text: dynamicAiReply || t.interview.questions[nextIndex],
             text: dynamicAiReply || t.interview.questions[nextIndex] || fallbackText,
             time: 'Just now'
           }
           onUpdateConversation([...updatedMessages, nextAiQuestion])
+          onUpdateQuestionIndex(nextIndex)
           onUpdateQuestionIndex(nextIndex < t.interview.questions.length ? nextIndex : currentQuestionIndex)
         } else {
           const completionMsg = {
