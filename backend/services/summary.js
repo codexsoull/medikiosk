@@ -252,12 +252,27 @@ export async function generateClinicalSummary({ conversation = [], documents = [
     { role: 'user', content: userPrompt }
   ]
 
-  const completion = await groq.chat.completions.create({
-    model,
-    messages,
-    temperature: 0.1,
-    max_tokens: 2000
-  })
+  let completion
+  try {
+    completion = await groq.chat.completions.create({
+      model,
+      messages,
+      temperature: 0.1,
+      max_tokens: 2000
+    })
+  } catch (err) {
+    if (err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('Rate limit')) {
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      completion = await groq.chat.completions.create({
+        model,
+        messages,
+        temperature: 0.1,
+        max_tokens: 2000
+      })
+    } else {
+      throw err
+    }
+  }
 
   const rawContent = completion.choices?.[0]?.message?.content
   const rawSummary = parseSummaryResponse(rawContent)

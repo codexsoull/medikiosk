@@ -254,7 +254,7 @@ router.post('/cases', (req, res) => {
     return res.status(500).json({
       status: 'error',
       message: 'Internal server error creating case',
-      error: error.message
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message })
     })
   }
 })
@@ -278,7 +278,7 @@ router.get('/cases', (req, res) => {
     return res.status(500).json({
       status: 'error',
       message: 'Internal server error retrieving cases',
-      error: error.message
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message })
     })
   }
 })
@@ -312,7 +312,7 @@ router.get('/cases/:id', (req, res) => {
     return res.status(500).json({
       status: 'error',
       message: 'Internal server error fetching case',
-      error: error.message
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message })
     })
   }
 })
@@ -398,7 +398,7 @@ router.patch('/cases/:id', (req, res) => {
     return res.status(500).json({
       status: 'error',
       message: 'Internal server error updating case',
-      error: error.message
+      ...(process.env.NODE_ENV !== 'production' && { error: error.message })
     })
   }
 })

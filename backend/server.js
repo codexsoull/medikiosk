@@ -17,10 +17,17 @@ const PORT = process.env.PORT || 5000
 app.use(express.json({ limit: '15mb' }))
 
 // CORS middleware allowing React frontend origin
-const allowedOrigins = [
+const defaultOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173'
 ]
+
+const envOrigins = [
+  process.env.FRONTEND_ORIGIN,
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim()) : [])
+].filter(Boolean)
+
+const allowedOrigins = [...new Set([...defaultOrigins, ...envOrigins])]
 
 app.use(
   cors({
@@ -49,6 +56,21 @@ app.get('/', (req, res) => {
     message: 'MediKiosk API Server is running',
     healthEndpoint: '/api/health',
     casesEndpoint: '/api/cases'
+  })
+})
+
+// Centralized error handling middleware
+app.use((err, req, res, next) => {
+  if (err.message && err.message.startsWith('CORS blocked')) {
+    return res.status(403).json({
+      status: 'error',
+      message: 'CORS forbidden: Origin not allowed'
+    })
+  }
+  console.error('Unhandled server error:', err.message || err)
+  res.status(500).json({
+    status: 'error',
+    message: 'Internal server error'
   })
 })
 

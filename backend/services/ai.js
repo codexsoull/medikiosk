@@ -166,13 +166,28 @@ export async function generateInterviewResponse({ message, language = 'en', conv
     messages.push({ role: 'user', content: message.trim() })
   }
 
-  // Call Groq chat completions
-  const completion = await groq.chat.completions.create({
-    model,
-    messages,
-    temperature: 0.3,
-    max_tokens: 600
-  })
+  // Call Groq chat completions with rate limit retry
+  let completion
+  try {
+    completion = await groq.chat.completions.create({
+      model,
+      messages,
+      temperature: 0.3,
+      max_tokens: 600
+    })
+  } catch (err) {
+    if (err?.status === 429 || err?.message?.includes('429') || err?.message?.includes('Rate limit')) {
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      completion = await groq.chat.completions.create({
+        model,
+        messages,
+        temperature: 0.3,
+        max_tokens: 600
+      })
+    } else {
+      throw err
+    }
+  }
 
   const rawContent = completion.choices?.[0]?.message?.content
   const reply = parseReply(rawContent)
