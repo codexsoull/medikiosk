@@ -1,5 +1,7 @@
+# MediKiosk Deployment Guide
 # MediKiosk — Production Deployment Guide & Readiness Architecture
 
+Placeholder
 This document provides complete instructions for local development, production configuration, environment variables, hosting architecture, and security considerations for the MediKiosk MVP.
 
 ---
