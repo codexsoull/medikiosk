@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import AppHeader from './components/AppHeader'
 import Welcome from './screens/Welcome'
+import IntakeMode from './screens/IntakeMode'
 import Consent from './screens/Consent'
 import IdentityVerification from './screens/IdentityVerification'
 import OTPVerification from './screens/OTPVerification'
@@ -50,6 +51,7 @@ export default function App() {
   const [language, setLanguage] = useState(getInitialLanguage)
   const [theme, setTheme] = useState(getInitialTheme)
   const [screen, setScreen] = useState('welcome')
+  const [intakeMode, setIntakeMode] = useState('standard')
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -140,6 +142,7 @@ export default function App() {
   // Navigation handlers
   const handleStart = () => {
     setScreen('consent')
+    setScreen('intake_mode')
   }
 
   const handleConsentContinue = () => {
@@ -369,6 +372,7 @@ export default function App() {
       }
     })
     setSelectedDoctorCase(null)
+    setIntakeMode('standard')
     setConversation([])
     setCurrentQuestionIndex(0)
     setIsInterviewFinished(false)
@@ -401,6 +405,18 @@ export default function App() {
           />
         )}
 
+        {/* Step 0.5: Intake Mode */}
+        {screen === 'intake_mode' && (
+          <IntakeMode
+            intakeMode={intakeMode}
+            onSelectIntakeMode={setIntakeMode}
+            onContinue={() => setScreen('consent')}
+            onBack={() => setScreen('welcome')}
+            language={language}
+            t={t}
+          />
+        )}
+
         {/* Step 1: Consent */}
         {screen === 'consent' && (
           <Consent
@@ -408,6 +424,7 @@ export default function App() {
             onUpdateCase={setCaseData}
             onContinue={handleConsentContinue}
             onBack={() => setScreen('welcome')}
+            onBack={() => setScreen('intake_mode')}
             language={language}
             t={t}
           />

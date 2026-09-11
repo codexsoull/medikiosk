@@ -8,11 +8,13 @@ export default function AppHeader({
   onToggleTheme,
   currentMode, // 'kiosk' | 'doctor'
   onSwitchMode,
+  screen,
   t
 }) {
   const [showInfoModal, setShowInfoModal] = useState(false)
   const isDark = theme === 'dark'
   const isDoctor = currentMode === 'doctor'
+  const isWelcomeScreen = screen === 'welcome'
 
   return (
     <>
@@ -38,8 +40,9 @@ export default function AppHeader({
 
         {/* Right: Clean Utility Controls */}
         <div className="header-right">
-          {/* Language Switcher */}
-          <div className="header-lang-segmented" role="group" aria-label="Language selector">
+          {/* Language Switcher (hidden on Welcome screen where language cards take focus) */}
+          {!isWelcomeScreen && (
+            <div className="header-lang-segmented" role="group" aria-label="Language selector">
             <button
               type="button"
               className={`header-lang-item ${language === 'English' ? 'active' : ''}`}
@@ -58,6 +61,7 @@ export default function AppHeader({
               हिंदी
             </button>
           </div>
+          )}
 
           {/* Theme Toggle Button with Clean SVG */}
           <button

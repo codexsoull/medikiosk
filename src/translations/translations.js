@@ -31,18 +31,42 @@ export const translations = {
         6: 'Review'
       },
       readAloud: 'Read Aloud',
-      stopSpeaking: 'Stop'
+      stopSpeaking: 'Stop',
+      clear: 'Clear',
+      backspace: 'Backspace',
+      upload: 'Upload',
+      skip: 'Skip'
     },
     welcome: {
       brand: 'MEDIKIOSK',
       tagline: 'AI-Powered Clinical Intake',
-      heading: 'Welcome to MediKiosk',
+      heading: 'Welcome to your digital health intake',
       subheading: 'Complete your health information before meeting your doctor.',
+      chooseLanguage: 'Choose your language',
+      chooseLanguageHindi: 'अपनी भाषा चुनें',
       startBtn: 'Start',
       selectLanguage: 'Language',
       english: 'English',
+      englishSubtext: 'Start in English',
       hindi: 'हिंदी',
-      trustStatement: 'Secure • Private • Simple'
+      hindiSubtext: 'हिंदी में शुरू करें',
+      trustStatement: 'Secure • Private • Simple',
+      welcomeAudioEnglish: 'Welcome to MediKiosk. Please select your intake type.',
+      welcomeAudioHindi: 'मेडीकियोस्क में आपका स्वागत है। कृपया अपना इंटेक प्रकार चुनें।'
+    },
+    intakeMode: {
+      title: 'Choose your intake type',
+      titleHindi: 'अपना इंटेक प्रकार चुनें',
+      subtitle: 'Select your medical consultation framework',
+      standardTitle: 'Standard Clinical Intake',
+      standardSubtitle: 'General patient history and clinical information',
+      standardBadge: 'General OPD / Modern Medicine',
+      ayushTitle: 'AYUSH Intake — Prototype',
+      ayushSubtitle: 'AYUSH intake framework prototype',
+      ayushBadge: 'Prototype',
+      ayushDisclaimer: 'This is an intake framework prototype. It does not diagnose or prescribe treatment.',
+      backBtn: '← Back',
+      continueBtn: 'Continue'
     },
     consent: {
       title: 'Before we begin',
@@ -75,9 +99,15 @@ export const translations = {
         mobile: 'Mobile OTP',
         existing: 'Existing Patient ID'
       },
+      defaultTag: 'Primary',
+      smsTag: 'SMS',
+      hospitalIdTag: 'Hospital ID',
       aadhaarInputLabel: 'Enter Aadhaar Number (Demo Masked):',
       sendOtpBtn: 'Send OTP',
-      mockDisclaimer: 'Mock Authentication — Demo Only'
+      mockDisclaimer: 'Mock Authentication — Demo Only',
+      keypadTitle: 'Touchscreen Numeric Keypad',
+      keypadClear: 'Clear',
+      keypadBackspace: '⌫'
     },
     otp: {
       title: 'Verify OTP',
@@ -349,18 +379,42 @@ export const translations = {
         6: 'समीक्षा'
       },
       readAloud: 'पढ़कर सुनाएं',
-      stopSpeaking: 'रोकें'
+      stopSpeaking: 'रोकें',
+      clear: 'साफ़ करें',
+      backspace: 'हटाएं',
+      upload: 'अपलोड करें',
+      skip: 'छोड़ें'
     },
     welcome: {
       brand: 'MEDIKIOSK',
       tagline: 'एआई-संचालित क्लिनिकल इनटेक',
-      heading: 'मेडीकियोस्क में आपका स्वागत है',
+      heading: 'आपके डिजिटल स्वास्थ्य इनटेक में आपका स्वागत है',
       subheading: 'डॉक्टर से मिलने से पहले अपनी स्वास्थ्य जानकारी पूरी करें।',
+      chooseLanguage: 'अपनी भाषा चुनें',
+      chooseLanguageHindi: 'अपनी भाषा चुनें',
       startBtn: 'शुरू करें',
       selectLanguage: 'भाषा',
       english: 'English',
+      englishSubtext: 'Start in English',
       hindi: 'हिंदी',
-      trustStatement: 'सुरक्षित • निजी • सरल'
+      hindiSubtext: 'हिंदी में शुरू करें',
+      trustStatement: 'सुरक्षित • निजी • सरल',
+      welcomeAudioEnglish: 'Welcome to MediKiosk. Please select your intake type.',
+      welcomeAudioHindi: 'मेडीकियोस्क में आपका स्वागत है। कृपया अपना इंटेक प्रकार चुनें।'
+    },
+    intakeMode: {
+      title: 'अपना इंटेक प्रकार चुनें',
+      titleHindi: 'अपना इंटेक प्रकार चुनें',
+      subtitle: 'अपने परामर्श के लिए इनटेक प्रकार चुनें',
+      standardTitle: 'मानक क्लिनिकल इनटेक',
+      standardSubtitle: 'सामान्य मरीज़ इतिहास और क्लिनिकल जानकारी',
+      standardBadge: 'सामान्य ओपीडी / आधुनिक चिकित्सा',
+      ayushTitle: 'आयुष इनटेक — प्रोटोटाइप',
+      ayushSubtitle: 'आयुष इनटेक ढांचा प्रोटोटाइप',
+      ayushBadge: 'प्रोटोटाइप',
+      ayushDisclaimer: 'यह केवल इंटेक फ्रेमवर्क का प्रोटोटाइप है। यह निदान या उपचार की सलाह नहीं देता।',
+      backBtn: '← वापस',
+      continueBtn: 'आगे बढ़ें'
     },
     consent: {
       title: 'शुरू करने से पहले',
@@ -393,9 +447,15 @@ export const translations = {
         mobile: 'मोबाइल ओटीपी',
         existing: 'मौजूदा मरीज़ आईडी'
       },
+      defaultTag: 'प्राथमिक',
+      smsTag: 'एसएमएस',
+      hospitalIdTag: 'अस्पताल आईडी',
       aadhaarInputLabel: 'आधार संख्या दर्ज करें (डेमो स्वरूप):',
       sendOtpBtn: 'ओटीपी भेजें',
-      mockDisclaimer: 'मॉक प्रमाणीकरण — केवल डेमो के लिए'
+      mockDisclaimer: 'मॉक प्रमाणीकरण — केवल डेमो के लिए',
+      keypadTitle: 'टचस्क्रीन संख्यात्मक कीपैड',
+      keypadClear: 'साफ़ करें',
+      keypadBackspace: '⌫'
     },
     otp: {
       title: 'ओटीपी सत्यापित करें',

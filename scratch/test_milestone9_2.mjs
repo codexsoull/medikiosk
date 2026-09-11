@@ -8,7 +8,7 @@ import assert from 'assert'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { mapBackendCaseToFrontend } from '../../../Desktop/New folder/medikiosk/src/api/cases.js'
+import { mapBackendCaseToFrontend } from '../src/api/cases.js'
 
 const BASE_URL = 'http://localhost:5000'
 const WORKSPACE_DIR = 'c:/Users/adiis/Desktop/New folder/medikiosk'

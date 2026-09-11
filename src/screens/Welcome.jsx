@@ -3,7 +3,37 @@ import Logo from '../components/Logo'
 import ReadAloud from '../components/ReadAloud'
 
 export default function Welcome({ language, onSelectLanguage, onStart, t }) {
-  const welcomeSpeech = `${t.welcome.heading}. ${t.welcome.subheading}`
+  const welcomeSpeech = language === 'Hindi'
+    ? (t.welcome?.welcomeAudioHindi || 'मेडीकियोस्क में आपका स्वागत है। कृपया अपना इंटेक प्रकार चुनें।')
+    : (t.welcome?.welcomeAudioEnglish || 'Welcome to MediKiosk. Please select your intake type.')
+
+  const handleChooseLanguage = (chosenLang) => {
+    // 1. Update/persist chosen language
+    if (onSelectLanguage) {
+      onSelectLanguage(chosenLang)
+    }
+
+    // 2. Attempt brief welcome audio non-blockingly
+    try {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
+        window.speechSynthesis.cancel()
+        const textToSpeak = chosenLang === 'Hindi'
+          ? (t.welcome?.welcomeAudioHindi || 'मेडीकियोस्क में आपका स्वागत है। कृपया अपना इंटेक प्रकार चुनें।')
+          : (t.welcome?.welcomeAudioEnglish || 'Welcome to MediKiosk. Please select your intake type.')
+        const utterance = new SpeechSynthesisUtterance(textToSpeak)
+        utterance.lang = chosenLang === 'Hindi' ? 'hi-IN' : 'en-IN'
+        utterance.rate = 0.95
+        window.speechSynthesis.speak(utterance)
+      }
+    } catch (err) {
+      console.warn('Welcome audio playback error:', err)
+    }
+
+    // 3. Advance directly to Intake Mode
+    if (onStart) {
+      onStart()
+    }
+  }
 
   return (
     <div className="kiosk-container welcome-card" role="main">
@@ -15,58 +45,43 @@ export default function Welcome({ language, onSelectLanguage, onStart, t }) {
           <p className="brand-tagline">{t.welcome.tagline}</p>
         </div>
 
-        <div className="welcome-messaging-block">
-          <h2 className="welcome-heading">{t.welcome.heading}</h2>
-          <p className="welcome-subheading">{t.welcome.subheading}</p>
+        <div className="welcome-prompt-banner">
+          <h2 className="welcome-instruction-title">
+            {t.welcome.chooseLanguage || 'Choose your language'}
+          </h2>
+          <p className="welcome-instruction-sub">
+            {t.welcome.chooseLanguageHindi || 'अपनी भाषा चुनें'}
+          </p>
         </div>
 
-        {/* Primary Action Button */}
-        <div className="welcome-primary-action">
+        {/* Primary Language-First Touch Cards */}
+        <div className="welcome-lang-grid" role="group" aria-label="Select language to begin">
           <button
             type="button"
-            className="primary-button start-button touch-target"
-            onClick={onStart}
-            aria-label={t.welcome.startBtn}
+            className={`welcome-lang-card-large touch-target ${language === 'English' ? 'active-lang' : ''}`}
+            onClick={() => handleChooseLanguage('English')}
+            aria-label="Start in English"
           >
-            <span>{t.welcome.startBtn}</span>
-            <span className="arrow-icon" aria-hidden="true">→</span>
+            <span className="lang-card-script">ENGLISH</span>
+            <span className="lang-card-subtext">{t.welcome.englishSubtext || 'Start in English'}</span>
+            <span className="lang-card-arrow" aria-hidden="true">→</span>
+          </button>
+
+          <button
+            type="button"
+            className={`welcome-lang-card-large touch-target ${language === 'Hindi' ? 'active-lang' : ''}`}
+            onClick={() => handleChooseLanguage('Hindi')}
+            aria-label="हिंदी में शुरू करें"
+          >
+            <span className="lang-card-script">हिंदी</span>
+            <span className="lang-card-subtext">{t.welcome.hindiSubtext || 'हिंदी में शुरू करें'}</span>
+            <span className="lang-card-arrow" aria-hidden="true">→</span>
           </button>
         </div>
 
-        {/* Secondary Language Selection */}
-        <div className="language-selector-section">
-          <span className="language-section-label" id="lang-select-heading">
-            {t.welcome.selectLanguage}
-          </span>
-          <div
-            className="welcome-lang-pills"
-            role="radiogroup"
-            aria-labelledby="lang-select-heading"
-          >
-            <button
-              type="button"
-              role="radio"
-              aria-checked={language === 'English'}
-              className={`welcome-lang-btn ${language === 'English' ? 'active' : ''}`}
-              onClick={() => onSelectLanguage('English')}
-            >
-              {t.welcome.english}
-            </button>
-            <button
-              type="button"
-              role="radio"
-              aria-checked={language === 'Hindi'}
-              className={`welcome-lang-btn ${language === 'Hindi' ? 'active' : ''}`}
-              onClick={() => onSelectLanguage('Hindi')}
-            >
-              {t.welcome.hindi}
-            </button>
-          </div>
-        </div>
-
-        {/* Subtle Text-Only Trust Statement at Bottom */}
+        {/* Subtle Text-Only Trust Statement */}
         <div className="welcome-trust-statement">
-          <span>{t.welcome.trustStatement}</span>
+          <span>{t.welcome.trustStatement || 'Secure • Private • Simple'}</span>
         </div>
 
         {/* Persistent Floating Read Aloud Button */}

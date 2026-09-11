@@ -2,6 +2,14 @@ import React, { useState } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import ReadAloud from '../components/ReadAloud'
 
+// Visual guidance shield icon
+const ShieldIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="30" height="30" aria-hidden="true">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="M9 12l2 2 4-4" />
+  </svg>
+)
+
 export default function Consent({ caseData, onUpdateCase, onContinue, onBack, language = 'English', t }) {
   const [consentChecked, setConsentChecked] = useState(Boolean(caseData.consent?.given))
   const [showPrivacyModal, setShowPrivacyModal] = useState(false)
@@ -30,7 +38,7 @@ export default function Consent({ caseData, onUpdateCase, onContinue, onBack, la
       <div className="card-top-nav">
         <button
           type="button"
-          className="back-button"
+          className="back-button touch-target"
           onClick={onBack}
           aria-label={t.consent.backBtn}
         >
@@ -40,9 +48,24 @@ export default function Consent({ caseData, onUpdateCase, onContinue, onBack, la
 
       <ProgressBar currentStep={1} totalSteps={6} t={t} />
 
-      <div className="page-header">
-        <h1 className="screen-title">{t.consent.title}</h1>
-        <p className="screen-subtitle">{t.consent.subtitle}</p>
+      <div className="page-header consent-page-header">
+        <div className="screen-title-group">
+          <div className="screen-title-icon-badge" aria-hidden="true">
+            <ShieldIcon />
+          </div>
+          <div className="screen-title-text-wrap">
+            <h1 className="screen-title">{t.consent.title}</h1>
+            <p className="screen-subtitle">{t.consent.subtitle}</p>
+          </div>
+          <div className="header-audio-action">
+            <ReadAloud
+              text={consentSpeech}
+              language={language}
+              t={t}
+              variant="compact"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="consent-content-box">
@@ -102,7 +125,7 @@ export default function Consent({ caseData, onUpdateCase, onContinue, onBack, la
       <div className="action-buttons-row">
         <button
           type="button"
-          className="secondary-button back-nav-btn"
+          className="secondary-button back-nav-btn touch-target"
           onClick={onBack}
         >
           {t.consent.backBtn}
@@ -110,7 +133,7 @@ export default function Consent({ caseData, onUpdateCase, onContinue, onBack, la
 
         <button
           type="button"
-          className={`primary-button continue-btn ${!consentChecked ? 'disabled-state' : ''}`}
+          className={`primary-button continue-btn touch-target ${!consentChecked ? 'disabled-state' : ''}`}
           onClick={handleContinue}
           disabled={!consentChecked}
           aria-disabled={!consentChecked}

@@ -2,6 +2,14 @@ import React, { useState } from 'react'
 import ProgressBar from '../components/ProgressBar'
 import ReadAloud from '../components/ReadAloud'
 
+// Visual guidance review icon
+const ReviewHeaderIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="28" height="28" aria-hidden="true">
+    <path d="M9 11l3 3L22 4" />
+    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+  </svg>
+)
+
 export default function PatientReview({
   caseData,
   onEditSection,
@@ -23,7 +31,7 @@ export default function PatientReview({
       <div className="card-top-nav">
         <button
           type="button"
-          className="back-button"
+          className="back-button touch-target"
           onClick={onBack}
           aria-label={t.review.backBtn}
         >
@@ -33,9 +41,24 @@ export default function PatientReview({
 
       <ProgressBar currentStep={6} totalSteps={6} t={t} />
 
-      <div className="page-header">
-        <h1 className="screen-title">{t.review.title}</h1>
-        <p className="screen-subtitle">{t.review.subtitle}</p>
+      <div className="page-header review-page-header">
+        <div className="screen-title-group">
+          <div className="screen-title-icon-badge" aria-hidden="true">
+            <ReviewHeaderIcon />
+          </div>
+          <div className="screen-title-text-wrap">
+            <h1 className="screen-title">{t.review.title}</h1>
+            <p className="screen-subtitle">{t.review.subtitle}</p>
+          </div>
+          <div className="header-audio-action">
+            <ReadAloud
+              text={`${t.review.title}. ${t.review.subtitle}`}
+              language={language}
+              t={t}
+              variant="compact"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="review-sections-list">
@@ -198,7 +221,7 @@ export default function PatientReview({
       <div className="action-buttons-row">
         <button
           type="button"
-          className="secondary-button back-nav-btn"
+          className="secondary-button back-nav-btn touch-target"
           onClick={onBack}
           disabled={isSubmitting}
         >

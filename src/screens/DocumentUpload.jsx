@@ -41,6 +41,16 @@ const DocIcon = ({ type }) => {
   )
 }
 
+// SVG document header icon
+const DocumentHeaderIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="28" height="28" aria-hidden="true">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="12" y1="18" x2="12" y2="12" />
+    <line x1="9" y1="15" x2="15" y2="15" />
+  </svg>
+)
+
 export default function DocumentUpload({
   uploadedDocuments,
   onUpdateDocuments,
@@ -205,7 +215,7 @@ export default function DocumentUpload({
       <div className="card-top-nav">
         <button
           type="button"
-          className="back-button"
+          className="back-button touch-target"
           onClick={onBack}
           aria-label={t.common.back}
         >
@@ -215,9 +225,24 @@ export default function DocumentUpload({
 
       <ProgressBar currentStep={5} totalSteps={6} t={t} />
 
-      <div className="page-header">
-        <h1 className="screen-title">{t.upload.title}</h1>
-        <p className="screen-subtitle">{t.upload.subtitle}</p>
+      <div className="page-header upload-page-header">
+        <div className="screen-title-group">
+          <div className="screen-title-icon-badge" aria-hidden="true">
+            <DocumentHeaderIcon />
+          </div>
+          <div className="screen-title-text-wrap">
+            <h1 className="screen-title">{t.upload.title}</h1>
+            <p className="screen-subtitle">{t.upload.subtitle}</p>
+          </div>
+          <div className="header-audio-action">
+            <ReadAloud
+              text={`${t.upload.title}. ${t.upload.subtitle}. ${t.upload.dropzoneHeading}`}
+              language={language}
+              t={t}
+              variant="compact"
+            />
+          </div>
+        </div>
       </div>
 
       {/* Touch-Friendly Dropzone */}
@@ -357,7 +382,7 @@ export default function DocumentUpload({
       <div className="action-buttons-row upload-actions">
         <button
           type="button"
-          className="secondary-button back-nav-btn"
+          className="secondary-button back-nav-btn touch-target"
           onClick={onBack}
         >
           {t.common.back}
@@ -367,14 +392,14 @@ export default function DocumentUpload({
           <div className="right-action-group">
             <button
               type="button"
-              className="secondary-button skip-step-btn"
+              className="secondary-button skip-step-btn touch-target"
               onClick={onSkip}
             >
               {t.upload.skipRecordsBtn}
             </button>
             <button
               type="button"
-              className="primary-button continue-btn"
+              className="primary-button continue-btn touch-target"
               onClick={onContinue}
             >
               <span>{t.upload.continueBtn}</span>
@@ -384,7 +409,7 @@ export default function DocumentUpload({
         ) : (
           <button
             type="button"
-            className="primary-button continue-btn"
+            className="primary-button continue-btn touch-target"
             onClick={onSkip}
           >
             <span>{t.upload.skipAndContinueBtn}</span>

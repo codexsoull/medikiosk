@@ -17,8 +17,22 @@ export default function SubmissionSuccess({
           </svg>
         </div>
 
-        <h1 className="success-title">{t.success.title}</h1>
-        <p className="success-subtitle">{t.success.subtitle}</p>
+        <div className="page-header success-page-header">
+          <div className="screen-title-group">
+            <div className="screen-title-text-wrap">
+              <h1 className="success-title">{t.success.title}</h1>
+              <p className="success-subtitle">{t.success.subtitle}</p>
+            </div>
+            <div className="header-audio-action">
+              <ReadAloud
+                text={`${t.success.title}. ${t.success.subtitle}. ${t.success.readyNotice}`}
+                language={language}
+                t={t}
+                variant="compact"
+              />
+            </div>
+          </div>
+        </div>
 
         {/* Case Token Summary Card */}
         <div className="case-token-card">
