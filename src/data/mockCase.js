@@ -55,6 +55,8 @@ export const initialCaseData = {
   },
 
   clinicalAlerts: [],
+  priority: 'ROUTINE',
+  screeningFlags: [],
 
   status: 'intake', // 'intake' | 'ready_for_doctor' | 'physician_accepted'
   intakeTimestamp: null,

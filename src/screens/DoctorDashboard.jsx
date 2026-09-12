@@ -19,6 +19,7 @@ export default function DoctorDashboard({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [priorityFilter, setPriorityFilter] = useState('ALL') // 'ALL' | 'HIGH' | 'REVIEW' | 'ROUTINE'
 
   const loadCases = async () => {
     setLoading(true)
@@ -41,8 +42,18 @@ export default function DoctorDashboard({
     loadCases()
   }, [])
 
-  // Filter cases based on search query
+  // Priority counts for tabs
+  const highCount = cases.filter((c) => (c.priority || 'ROUTINE').toUpperCase() === 'HIGH').length
+  const reviewCount = cases.filter((c) => (c.priority || 'ROUTINE').toUpperCase() === 'REVIEW').length
+  const routineCount = cases.filter((c) => (c.priority || 'ROUTINE').toUpperCase() === 'ROUTINE').length
+
+  // Filter cases based on priority filter and search query
   const filteredCases = cases.filter((item) => {
+    const itemPriority = (item.priority || 'ROUTINE').toUpperCase()
+    if (priorityFilter !== 'ALL' && itemPriority !== priorityFilter) {
+      return false
+    }
+
     const caseId = (item.case_id || item.caseId || '').toLowerCase()
     const patientName = (item.patient_name || item.patient?.name || '').toLowerCase()
     const complaint = (
@@ -95,13 +106,52 @@ export default function DoctorDashboard({
         </div>
       </div>
 
-      {/* Queue Toolbar */}
+      {/* Queue Toolbar with Priority Filter Tabs */}
       <div className="portal-toolbar">
         <div className="queue-title-group">
           <h2>{t.doctorDashboard.todayCases}</h2>
           <span className="queue-count-pill">
             {t.doctorDashboard.casesCount(filteredCases.length)}
           </span>
+        </div>
+
+        <div className="priority-filter-tabs" role="tablist" aria-label="Filter cases by priority">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={priorityFilter === 'ALL'}
+            className={`priority-filter-tab ${priorityFilter === 'ALL' ? 'active' : ''}`}
+            onClick={() => setPriorityFilter('ALL')}
+          >
+            {t.doctorDashboard.filterAll || 'All'} ({cases.length})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={priorityFilter === 'HIGH'}
+            className={`priority-filter-tab tab-high ${priorityFilter === 'HIGH' ? 'active' : ''}`}
+            onClick={() => setPriorityFilter('HIGH')}
+          >
+            🔴 {t.doctorDashboard.filterHigh || 'High Priority'} ({highCount})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={priorityFilter === 'REVIEW'}
+            className={`priority-filter-tab tab-review ${priorityFilter === 'REVIEW' ? 'active' : ''}`}
+            onClick={() => setPriorityFilter('REVIEW')}
+          >
+            🟠 {t.doctorDashboard.filterReview || 'Needs Review'} ({reviewCount})
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={priorityFilter === 'ROUTINE'}
+            className={`priority-filter-tab tab-routine ${priorityFilter === 'ROUTINE' ? 'active' : ''}`}
+            onClick={() => setPriorityFilter('ROUTINE')}
+          >
+            🟢 {t.doctorDashboard.filterRoutine || 'Routine'} ({routineCount})
+          </button>
         </div>
 
         <div className="queue-search-box">
@@ -119,6 +169,7 @@ export default function DoctorDashboard({
               type="button"
               className="clear-search-btn"
               onClick={() => setSearchQuery('')}
+              aria-label="Clear search"
             >
               ✕
             </button>
@@ -132,6 +183,7 @@ export default function DoctorDashboard({
           <thead>
             <tr>
               <th scope="col">{t.doctorDashboard.caseIdHeader}</th>
+              <th scope="col">{t.doctorDashboard.priorityHeader || 'Priority'}</th>
               <th scope="col">{t.doctorDashboard.patientHeader}</th>
               <th scope="col">{t.doctorDashboard.demographicsHeader}</th>
               <th scope="col">{t.doctorDashboard.complaintHeader}</th>
@@ -142,7 +194,7 @@ export default function DoctorDashboard({
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="6" className="empty-queue-cell">
+                <td colSpan="7" className="empty-queue-cell">
                   <div className="table-loading-spinner-wrap">
                     <span className="submit-spinner" aria-hidden="true"></span>
                     <span>{t.doctorDashboard.loadingCases || 'Loading patient cases from database...'}</span>
@@ -151,7 +203,7 @@ export default function DoctorDashboard({
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan="6" className="empty-queue-cell error-cell">
+                <td colSpan="7" className="empty-queue-cell error-cell">
                   <p className="table-error-text">⚠️ {error}</p>
                   <button
                     type="button"
@@ -164,7 +216,7 @@ export default function DoctorDashboard({
               </tr>
             ) : filteredCases.length === 0 ? (
               <tr>
-                <td colSpan="6" className="empty-queue-cell">
+                <td colSpan="7" className="empty-queue-cell">
                   <p>{t.doctorDashboard.emptyCases}</p>
                 </td>
               </tr>
@@ -191,6 +243,8 @@ export default function DoctorDashboard({
                   item.case_status === 'physician_accepted' ||
                   item.status === 'physician_accepted'
 
+                const priority = (item.priority || 'ROUTINE').toUpperCase()
+
                 const timeString = item.created_at
                   ? new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
                   : item.intakeTimestamp
@@ -202,6 +256,24 @@ export default function DoctorDashboard({
                     <td className="cell-case-id">
                       <strong>{caseId}</strong>
                       <span className="cell-sub-info">{timeString}</span>
+                    </td>
+                    <td className="cell-priority">
+                      {priority === 'HIGH' ? (
+                        <span className="priority-pill priority-pill-high" title="High Priority Review Recommended">
+                          <span className="priority-pill-icon" aria-hidden="true">🔴</span>
+                          <span>{t.doctorDashboard.priorityHigh || 'High Priority'}</span>
+                        </span>
+                      ) : priority === 'REVIEW' ? (
+                        <span className="priority-pill priority-pill-review" title="Physician Review Recommended">
+                          <span className="priority-pill-icon" aria-hidden="true">🟠</span>
+                          <span>{t.doctorDashboard.priorityReview || 'Needs Review'}</span>
+                        </span>
+                      ) : (
+                        <span className="priority-pill priority-pill-routine" title="Standard OPD Routine Intake">
+                          <span className="priority-pill-icon" aria-hidden="true">🟢</span>
+                          <span>{t.doctorDashboard.priorityRoutine || 'Routine'}</span>
+                        </span>
+                      )}
                     </td>
                     <td className="cell-patient">
                       <div className="patient-avatar-cell">

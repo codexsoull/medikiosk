@@ -4,8 +4,8 @@ import ReadAloud from '../components/ReadAloud'
 
 export default function Welcome({ language, onSelectLanguage, onStart, t }) {
   const welcomeSpeech = language === 'Hindi'
-    ? (t.welcome?.welcomeAudioHindi || 'मेडीकियोस्क में आपका स्वागत है। कृपया अपना इंटेक प्रकार चुनें।')
-    : (t.welcome?.welcomeAudioEnglish || 'Welcome to MediKiosk. Please select your intake type.')
+    ? (t.welcome?.welcomeAudioHindi || 'मेडीकियोस्क में आपका स्वागत है। कृपया अपना स्वास्थ्य इनटेक शुरू करें।')
+    : (t.welcome?.welcomeAudioEnglish || 'Welcome to MediKiosk. Please begin your health intake.')
 
   const handleChooseLanguage = (chosenLang) => {
     // 1. Update/persist chosen language
@@ -18,8 +18,8 @@ export default function Welcome({ language, onSelectLanguage, onStart, t }) {
       if (typeof window !== 'undefined' && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
         window.speechSynthesis.cancel()
         const textToSpeak = chosenLang === 'Hindi'
-          ? (t.welcome?.welcomeAudioHindi || 'मेडीकियोस्क में आपका स्वागत है। कृपया अपना इंटेक प्रकार चुनें।')
-          : (t.welcome?.welcomeAudioEnglish || 'Welcome to MediKiosk. Please select your intake type.')
+          ? (t.welcome?.welcomeAudioHindi || 'मेडीकियोस्क में आपका स्वागत है। कृपया अपना स्वास्थ्य इनटेक शुरू करें।')
+          : (t.welcome?.welcomeAudioEnglish || 'Welcome to MediKiosk. Please begin your health intake.')
         const utterance = new SpeechSynthesisUtterance(textToSpeak)
         utterance.lang = chosenLang === 'Hindi' ? 'hi-IN' : 'en-IN'
         utterance.rate = 0.95
@@ -29,7 +29,7 @@ export default function Welcome({ language, onSelectLanguage, onStart, t }) {
       console.warn('Welcome audio playback error:', err)
     }
 
-    // 3. Advance directly to Intake Mode
+    // 3. Advance directly to Consent
     if (onStart) {
       onStart()
     }

@@ -26,15 +26,30 @@ if (fs.existsSync(schemaPath)) {
   db.exec(schemaSql)
 }
 
-// Ensure backward-compatible documents column exists on cases table
+// Ensure backward-compatible columns exist on cases table
 try {
   const columns = db.pragma('table_info(cases)')
-  const hasDocuments = Array.isArray(columns) && columns.some((c) => c.name === 'documents')
-  if (!hasDocuments) {
-    db.exec('ALTER TABLE cases ADD COLUMN documents TEXT')
+  if (Array.isArray(columns)) {
+    const hasDocuments = columns.some((c) => c.name === 'documents')
+    if (!hasDocuments) {
+      db.exec('ALTER TABLE cases ADD COLUMN documents TEXT')
+    }
+
+    const hasPriority = columns.some((c) => c.name === 'priority')
+    if (!hasPriority) {
+      db.exec("ALTER TABLE cases ADD COLUMN priority TEXT DEFAULT 'ROUTINE'")
+    }
+
+    const hasScreeningFlags = columns.some((c) => c.name === 'screening_flags')
+    if (!hasScreeningFlags) {
+      db.exec('ALTER TABLE cases ADD COLUMN screening_flags TEXT')
+    }
+
+    // Safely ensure priority index exists
+    db.exec('CREATE INDEX IF NOT EXISTS idx_cases_priority ON cases(priority)')
   }
 } catch (err) {
-  console.warn('Migration warning for documents column:', err.message)
+  console.warn('Migration warning for cases columns:', err.message)
 }
 
 /**
@@ -54,6 +69,7 @@ export function formatCaseRow(row) {
 
   let ai_summary = row.ai_summary
   let clinical_alerts = row.clinical_alerts
+  let screening_flags = row.screening_flags
   let documents = []
 
   if (typeof ai_summary === 'string' && (ai_summary.startsWith('{') || ai_summary.startsWith('['))) {
@@ -67,6 +83,14 @@ export function formatCaseRow(row) {
   if (typeof clinical_alerts === 'string' && (clinical_alerts.startsWith('{') || clinical_alerts.startsWith('['))) {
     try {
       clinical_alerts = JSON.parse(clinical_alerts)
+    } catch {
+      // keep raw string if not parseable
+    }
+  }
+
+  if (typeof screening_flags === 'string' && (screening_flags.startsWith('{') || screening_flags.startsWith('['))) {
+    try {
+      screening_flags = JSON.parse(screening_flags)
     } catch {
       // keep raw string if not parseable
     }
@@ -87,6 +111,8 @@ export function formatCaseRow(row) {
 
   return {
     ...row,
+    priority: row.priority || 'ROUTINE',
+    screening_flags: Array.isArray(screening_flags) ? screening_flags : [],
     ai_summary,
     clinical_alerts,
     documents

@@ -1,5 +1,6 @@
 import express from 'express'
 import db, { generateCaseId, formatCaseRow } from '../database/db.js'
+import { calculatePriority } from '../services/priority.js'
 
 const router = express.Router()
 
@@ -186,6 +187,23 @@ router.post('/cases', (req, res) => {
       documents = JSON.stringify(sanitizedDocs)
     }
 
+    // Calculate deterministic review priority authoritatively on backend
+    const priorityResult = calculatePriority({
+      chief_complaint,
+      symptoms,
+      medical_history,
+      medications,
+      allergies,
+      severity: body.severity || body.complaint?.severity,
+      interview_answers: body.interview_answers || body.answers || body.interview?.answersByIndex,
+      red_flags: body.red_flags || body.redFlags || body.interview?.redFlags,
+      clinical_alerts: body.clinical_alerts || body.clinicalAlerts,
+      ai_summary: body.ai_summary || body.summary
+    })
+
+    const priority = priorityResult.priority || 'ROUTINE'
+    const screening_flags = JSON.stringify(priorityResult.flags || [])
+
     // Generate or validate unique case ID
     let case_id = body.case_id || body.caseId
     if (case_id) {
@@ -216,8 +234,10 @@ router.post('/cases', (req, res) => {
         clinical_alerts,
         doctor_notes,
         case_status,
-        documents
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        documents,
+        priority,
+        screening_flags
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
 
     const info = insertStmt.run(
@@ -238,7 +258,9 @@ router.post('/cases', (req, res) => {
       clinical_alerts,
       doctor_notes,
       case_status,
-      documents
+      documents,
+      priority,
+      screening_flags
     )
 
     const createdRow = db.prepare('SELECT * FROM cases WHERE id = ?').get(info.lastInsertRowid)
@@ -247,6 +269,8 @@ router.post('/cases', (req, res) => {
       status: 'success',
       message: 'Case created successfully',
       case_id: createdRow.case_id,
+      priority: createdRow.priority || 'ROUTINE',
+      screening_flags: createdRow.screening_flags ? JSON.parse(createdRow.screening_flags) : [],
       data: formatCaseRow(createdRow)
     })
   } catch (error) {
@@ -261,11 +285,20 @@ router.post('/cases', (req, res) => {
 
 /**
  * GET /api/cases
- * Retrieve all patient cases sorted newest first
+ * Retrieve all patient cases sorted by priority (HIGH -> REVIEW -> ROUTINE) and newest first within tier
  */
 router.get('/cases', (req, res) => {
   try {
-    const rows = db.prepare('SELECT * FROM cases ORDER BY id DESC').all()
+    const rows = db.prepare(`
+      SELECT * FROM cases
+      ORDER BY
+        CASE
+          WHEN priority = 'HIGH' THEN 1
+          WHEN priority = 'REVIEW' THEN 2
+          ELSE 3
+        END ASC,
+        id DESC
+    `).all()
     const formattedRows = rows.map(formatCaseRow)
 
     return res.status(200).json({

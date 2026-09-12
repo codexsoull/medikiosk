@@ -35,30 +35,6 @@ export default function IdentityVerification({
     }))
   }
 
-  const handleKeypadInput = (digit) => {
-    setMaskedAadhaar((prev) => {
-      const current = prev === 'XXXX XXXX 1234' ? '' : prev
-      if (current.length >= 14) return current
-      const digitsOnly = current.replace(/\s+/g, '')
-      if (/^\d*$/.test(digitsOnly) && digitsOnly.length < 12) {
-        const nextDigits = digitsOnly + digit
-        return nextDigits.replace(/(\d{4})(?=\d)/g, '$1 ')
-      }
-      return current + digit
-    })
-  }
-
-  const handleKeypadBackspace = () => {
-    setMaskedAadhaar((prev) => {
-      if (!prev || prev === 'XXXX XXXX 1234') return ''
-      const trimmed = prev.trimEnd()
-      return trimmed.slice(0, -1)
-    })
-  }
-
-  const handleKeypadClear = () => {
-    setMaskedAadhaar('')
-  }
 
   const handleSendOtp = (e) => {
     e.preventDefault()
@@ -187,47 +163,6 @@ export default function IdentityVerification({
           </span>
         </div>
 
-        {/* Touchscreen Numeric Keypad */}
-        <div className="kiosk-keypad-container" aria-label={t.identity.keypadTitle || 'Touchscreen Numeric Keypad'}>
-          <div className="kiosk-keypad-grid" role="group" aria-label="Keypad numbers">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-              <button
-                key={num}
-                type="button"
-                className="keypad-btn touch-target"
-                onClick={() => handleKeypadInput(String(num))}
-                aria-label={`Digit ${num}`}
-              >
-                {num}
-              </button>
-            ))}
-            <button
-              type="button"
-              className="keypad-btn keypad-action-btn keypad-backspace-btn touch-target"
-              onClick={handleKeypadBackspace}
-              aria-label={t.identity.keypadBackspace || 'Backspace'}
-              title={t.identity.keypadBackspace || 'Backspace'}
-            >
-              ⌫
-            </button>
-            <button
-              type="button"
-              className="keypad-btn touch-target"
-              onClick={() => handleKeypadInput('0')}
-              aria-label="Digit 0"
-            >
-              0
-            </button>
-            <button
-              type="button"
-              className="keypad-btn keypad-action-btn keypad-clear-btn touch-target"
-              onClick={handleKeypadClear}
-              aria-label={t.identity.keypadClear || 'Clear'}
-            >
-              {t.identity.keypadClear || 'Clear'}
-            </button>
-          </div>
-        </div>
 
         <div className="mock-disclaimer-banner">
           <span className="disclaimer-dot"></span>

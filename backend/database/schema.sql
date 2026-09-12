@@ -20,6 +20,8 @@ CREATE TABLE IF NOT EXISTS cases (
   doctor_notes TEXT,
   case_status TEXT DEFAULT 'ready_for_doctor',
   documents TEXT,
+  priority TEXT DEFAULT 'ROUTINE',
+  screening_flags TEXT,
   created_at TEXT DEFAULT (datetime('now', 'localtime')),
   updated_at TEXT DEFAULT (datetime('now', 'localtime'))
 );

@@ -56,7 +56,9 @@ export default function DoctorCase({
   const summary = isEditing ? editedFields : (caseData.summary || {})
   const docs = caseData.documents || []
   const alerts = caseData.clinicalAlerts || []
-  const hasHighSeverity = alerts.some((a) => a.severity === 'high')
+  const screeningFlags = caseData.screeningFlags || caseData.screening_flags || []
+  const priority = (caseData.priority || (alerts.some((a) => a.severity === 'high') ? 'HIGH' : alerts.length > 0 ? 'REVIEW' : 'ROUTINE')).toUpperCase()
+  const hasHighSeverity = priority === 'HIGH' || alerts.some((a) => a.severity === 'high')
 
   const handleFieldChange = (fieldKey, value) => {
     setEditedFields((prev) => ({
@@ -218,7 +220,64 @@ export default function DoctorCase({
               <span className="demographic-key">{t.doctorCase.caseIdLabel}</span>
               <strong className="demographic-val">{caseData.caseId || caseData.case_id || 'CASE-2026-0001'}</strong>
             </div>
+            <div className="demographic-item-pill demographic-item-priority">
+              <span className="demographic-key">{t.doctorCase.priorityLabel || 'Review Priority:'}</span>
+              <strong className={`demographic-val ${priority === 'HIGH' ? 'val-high-priority' : priority === 'REVIEW' ? 'val-review-priority' : 'val-routine-priority'}`}>
+                {priority === 'HIGH' ? '🔴 ' + (t.doctorDashboard?.priorityHigh || 'High Priority') : priority === 'REVIEW' ? '🟠 ' + (t.doctorDashboard?.priorityReview || 'Needs Review') : '🟢 ' + (t.doctorDashboard?.priorityRoutine || 'Routine')}
+              </strong>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Screening Indicators Card — Deterministic Priority Findings */}
+      <div className={`screening-indicators-card ${priority === 'HIGH' ? 'screening-card-high' : priority === 'REVIEW' ? 'screening-card-review' : 'screening-card-routine'}`}>
+        <div className="screening-card-header">
+          <div className="screening-header-left">
+            <span className="screening-card-badge">
+              {priority === 'HIGH' ? '🔴 HIGH PRIORITY' : priority === 'REVIEW' ? '🟠 NEEDS REVIEW' : '🟢 ROUTINE'}
+            </span>
+            <h3 className="screening-card-title">{t.doctorCase.screeningIndicatorsTitle || 'Screening Indicators'}</h3>
+          </div>
+          <div className="screening-header-right">
+            <span className="screening-priority-text">
+              {t.doctorCase.priorityLabel || 'Review Priority:'} <strong>{priority === 'HIGH' ? (t.doctorDashboard?.priorityHigh || 'High Priority') : priority === 'REVIEW' ? (t.doctorDashboard?.priorityReview || 'Needs Review') : (t.doctorDashboard?.priorityRoutine || 'Routine')}</strong>
+            </span>
+          </div>
+        </div>
+
+        {screeningFlags.length > 0 ? (
+          <ul className="screening-flags-list" aria-label="Detected screening indicators">
+            {screeningFlags.map((flag, idx) => {
+              const label = patient.language === 'Hindi' && flag.labelHindi ? flag.labelHindi : flag.label
+              return (
+                <li key={idx} className="screening-flag-item">
+                  <div className="screening-flag-indicator" aria-hidden="true">
+                    {flag.severity === 'high' ? '⚠️' : 'ℹ️'}
+                  </div>
+                  <div className="screening-flag-content">
+                    <strong className="screening-flag-label">{label}</strong>
+                    {flag.reason && (
+                      <p className="screening-flag-reason">{flag.reason}</p>
+                    )}
+                  </div>
+                  <span className={`screening-flag-severity ${flag.severity === 'high' ? 'severity-high' : 'severity-medium'}`}>
+                    {flag.severity === 'high' ? 'High Concern' : 'Review Note'}
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="screening-no-flags">
+            {t.doctorCase.noScreeningIndicators || 'No acute screening indicators detected. Routine intake review.'}
+          </p>
+        )}
+
+        <div className="screening-card-footer">
+          <p className="screening-disclaimer-text">
+            🛡️ {t.doctorCase.screeningDisclaimer || 'Screening indicator detected. Physician review recommended. This priority indicator is not a diagnosis.'}
+          </p>
         </div>
       </div>
 

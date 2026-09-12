@@ -3709,7 +3709,6 @@
   }
 
   .welcome-card,
-  .intake-mode-card,
   .consent-card,
   .identity-card,
   .otp-card,
@@ -3723,8 +3722,8 @@
 
 /* ==========================================================================
    MILESTONE 11B: HOSPITAL KIOSK UX & ACCESSIBILITY ENHANCEMENTS
-   Touch targets (48px min, 56-64px preferred), numeric keypad, 
-   language-first cards, intake mode framework, and focus accessibility.
+   Touch targets (48px min, 56-64px preferred),
+   language-first cards, and focus accessibility.
    ========================================================================== */
 
 /* Universal Focus Visibility */
@@ -3862,177 +3861,7 @@
   opacity: 0.7;
 }
 
-/* Intake Mode Screen */
-.intake-mode-card.kiosk-container {
-  max-width: 860px;
-}
 
-.intake-mode-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  margin: 20px 0 28px;
-}
-
-.intake-mode-card {
-  display: flex;
-  flex-direction: column;
-  padding: 26px 28px;
-  background-color: var(--surface-secondary);
-  border: 2px solid var(--border);
-  border-radius: var(--radius-lg);
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-height: 120px;
-  position: relative;
-}
-
-.intake-mode-card:hover {
-  border-color: var(--primary);
-  background-color: var(--primary-light);
-  box-shadow: var(--shadow-md);
-}
-
-.intake-mode-card.selected {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-focus-ring);
-}
-
-.intake-mode-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 8px;
-}
-
-.intake-mode-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.intake-mode-badge {
-  font-size: 13px;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 999px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.intake-mode-badge.standard {
-  background-color: var(--primary-light);
-  color: var(--primary);
-  border: 1px solid var(--primary);
-}
-
-.intake-mode-badge.prototype {
-  background-color: var(--warning-light);
-  color: var(--warning);
-  border: 1px solid var(--warning);
-}
-
-.intake-mode-desc {
-  font-size: 16px;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-  line-height: 1.45;
-}
-
-.ayush-disclaimer-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  font-size: 14px;
-  color: var(--text-secondary);
-  background-color: var(--surface);
-  padding: 12px 16px;
-  border-radius: var(--radius-sm);
-  border: 1.5px dashed var(--border);
-  margin-bottom: 14px;
-  line-height: 1.45;
-}
-
-.ayush-disclaimer-box .disclaimer-icon {
-  font-size: 18px;
-}
-
-.intake-mode-action-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--primary);
-}
-
-/* Touchscreen Numeric Keypad for Identity Verification */
-.kiosk-keypad-container {
-  width: 100%;
-  max-width: 420px;
-  margin: 18px auto 22px;
-}
-
-.kiosk-keypad-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-.keypad-btn {
-  min-height: 62px;
-  min-width: 62px;
-  font-size: 24px;
-  font-weight: 800;
-  border-radius: var(--radius-md);
-  border: 2px solid var(--border);
-  background-color: var(--surface-secondary);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.12s ease;
-  user-select: none;
-  cursor: pointer;
-  box-shadow: var(--shadow-sm);
-}
-
-.keypad-btn:hover {
-  background-color: var(--primary-light);
-  border-color: var(--primary);
-  color: var(--primary);
-  transform: translateY(-1px);
-}
-
-.keypad-btn:active {
-  background-color: var(--primary);
-  color: #FFFFFF;
-  transform: scale(0.96);
-}
-
-.keypad-action-btn {
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.keypad-clear-btn {
-  color: var(--danger);
-  border-color: rgba(201, 74, 74, 0.3);
-}
-
-.keypad-clear-btn:hover {
-  background-color: var(--danger-light);
-  border-color: var(--danger);
-  color: var(--danger);
-}
-
-.keypad-backspace-btn {
-  font-size: 24px;
-}
 
 /* Enhanced Touch Targets for Kiosk Inputs and Buttons */
 .auth-method-card {
@@ -4143,13 +3972,284 @@
     min-height: 140px;
     padding: 24px 18px;
   }
+}
 
-  .kiosk-keypad-container {
-    max-width: 100%;
-  }
+/* ==========================================================================
+   Milestone 11C: Priority Engine & Screening Indicators Styles
+   ========================================================================== */
 
-  .keypad-btn {
-    min-height: 54px;
-    font-size: 20px;
-  }
+/* Priority Badges / Pills */
+.priority-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.priority-pill-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.priority-pill-high {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+.priority-pill-review {
+  background-color: #ffedd5;
+  color: #9a3412;
+  border: 1px solid #fdba74;
+}
+
+.priority-pill-routine {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+/* Priority Filter Tabs */
+.priority-filter-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.priority-filter-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1.5px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.priority-filter-tab:hover {
+  border-color: var(--primary);
+  color: var(--text-primary);
+  background-color: var(--surface-hover, rgba(0, 0, 0, 0.02));
+}
+
+.priority-filter-tab.active {
+  background-color: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.priority-filter-tab.tab-high.active {
+  background-color: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.priority-filter-tab.tab-review.active {
+  background-color: #ea580c;
+  border-color: #ea580c;
+  color: #ffffff;
+}
+
+.priority-filter-tab.tab-routine.active {
+  background-color: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+/* Demographic Priority Pill */
+.val-high-priority {
+  color: #dc2626;
+  font-weight: 800;
+}
+
+.val-review-priority {
+  color: #ea580c;
+  font-weight: 800;
+}
+
+.val-routine-priority {
+  color: #16a34a;
+  font-weight: 800;
+}
+
+/* Doctor Case Screening Indicators Card */
+.screening-indicators-card {
+  margin: 16px 0 20px;
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  border: 1.5px solid var(--border);
+  background-color: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.screening-card-high {
+  border-color: #fca5a5;
+  background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%);
+}
+
+.screening-card-review {
+  border-color: #fed7aa;
+  background: linear-gradient(180deg, #fffaf5 0%, #ffffff 100%);
+}
+
+.screening-card-routine {
+  border-color: #bbf7d0;
+  background: linear-gradient(180deg, #f7fef9 0%, #ffffff 100%);
+}
+
+.screening-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  margin-bottom: 14px;
+}
+
+.screening-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.screening-card-badge {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.screening-card-high .screening-card-badge {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.screening-card-review .screening-card-badge {
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+
+.screening-card-routine .screening-card-badge {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.screening-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.screening-priority-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.screening-priority-text strong {
+  color: var(--text-primary);
+}
+
+.screening-flags-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.screening-flag-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background-color: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.screening-card-high .screening-flag-item {
+  background-color: #fef2f2;
+  border-color: #fee2e2;
+}
+
+.screening-card-review .screening-flag-item {
+  background-color: #fff7ed;
+  border-color: #ffedd5;
+}
+
+.screening-flag-indicator {
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.screening-flag-content {
+  flex: 1;
+}
+
+.screening-flag-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.screening-flag-reason {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.screening-flag-severity {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.severity-high {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.severity-medium {
+  background-color: #ffedd5;
+  color: #9a3412;
+}
+
+.screening-no-flags {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin: 0 0 14px;
+}
+
+.screening-card-footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: 10px;
+}
+
+.screening-disclaimer-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
 }

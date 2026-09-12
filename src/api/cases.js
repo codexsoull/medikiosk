@@ -155,6 +155,19 @@ export function mapBackendCaseToFrontend(row) {
     clinicalAlerts = []
   }
 
+  // Ensure screening_flags is an array
+  let screeningFlags = row.screening_flags
+  if (typeof screeningFlags === 'string') {
+    try {
+      screeningFlags = JSON.parse(screeningFlags)
+    } catch {
+      screeningFlags = []
+    }
+  }
+  if (!Array.isArray(screeningFlags)) {
+    screeningFlags = []
+  }
+
   // Safely parse and normalize documents array
   let rawDocs = row.documents
   if (typeof rawDocs === 'string') {
@@ -284,6 +297,9 @@ export function mapBackendCaseToFrontend(row) {
       isAiDraft: Boolean(summary.isAiDraft)
     },
     clinicalAlerts: clinicalAlerts,
+    priority: row.priority || 'ROUTINE',
+    screeningFlags: screeningFlags,
+    screening_flags: screeningFlags,
     documents: documents,
     doctor_notes: row.doctor_notes || '',
     physicianNotes: row.doctor_notes || ''

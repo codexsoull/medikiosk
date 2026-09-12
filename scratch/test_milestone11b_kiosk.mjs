@@ -1,6 +1,7 @@
 /**
- * Comprehensive Acceptance Test Suite for Milestone 11B:
+ * Comprehensive Acceptance Test Suite for Revised Milestone 11B:
  * Hospital OPD Kiosk UX, Accessibility & Patient-Facing UI Redesign
+ * (Scope: Language-First Welcome, Direct-to-Consent, Touch Targets, Normal Identity Input, Doctor Workflow Intact)
  */
 
 import assert from 'assert'
@@ -30,7 +31,7 @@ async function requestJson(url, options = {}) {
 }
 
 async function runMilestone11BTests() {
-  console.log('🧪 Starting Milestone 11B Acceptance Tests (Hospital OPD Kiosk UX & Accessibility)...\n')
+  console.log('🧪 Starting Revised Milestone 11B Acceptance Tests (Hospital OPD Kiosk UX & Accessibility)...\n')
 
   let passed = 0
   let failed = 0
@@ -46,7 +47,7 @@ async function runMilestone11BTests() {
   }
 
   // =========================================================================
-  // GROUP A: LANGUAGE FLOW
+  // GROUP A: LANGUAGE FLOW & DIRECT-TO-CONSENT WELCOME SCREEN
   // =========================================================================
   console.log('--- Group A: Language-First Flow & Welcome Screen ---')
   try {
@@ -61,6 +62,8 @@ async function runMilestone11BTests() {
     assert(welcomeContent.includes('हिंदी'), 'Welcome screen must display large Hindi card')
     assert(welcomeContent.includes('speechSynthesis'), 'Welcome screen must attempt non-blocking audio welcome')
     assert(welcomeContent.includes('ReadAloud'), 'Welcome screen must provide accessible ReadAloud assistance')
+    assert(!welcomeContent.includes('intake type'), 'Welcome speech does not refer to intake type')
+    assert(!welcomeContent.includes('इंटेक प्रकार'), 'Hindi welcome speech does not refer to intake type')
     pass('Welcome.jsx features large touch cards for English and Hindi with non-blocking audio welcome')
   } catch (e) {
     fail('Welcome screen language-first presentation', e)
@@ -69,11 +72,12 @@ async function runMilestone11BTests() {
   try {
     const appPath = path.join(WORKSPACE_DIR, 'src/App.jsx')
     const appContent = fs.readFileSync(appPath, 'utf8')
-    assert(appContent.includes("setScreen('intake_mode')"), "Starting intake from Welcome advances directly to intake_mode")
-    assert(appContent.includes("screen === 'intake_mode'"), "App.jsx renders intake_mode screen")
-    pass('Language selection advances directly to Intake Mode')
+    assert(appContent.includes("setScreen('consent')"), "Starting intake from Welcome advances directly to consent")
+    assert(!appContent.includes("setScreen('intake_mode')"), "App.jsx does not navigate to intake_mode")
+    assert(!appContent.includes("screen === 'intake_mode'"), "App.jsx does not render intake_mode screen")
+    pass('Language selection advances directly to Consent')
   } catch (e) {
-    fail('Language flow navigation to Intake Mode', e)
+    fail('Language flow navigation directly to Consent', e)
   }
 
   try {
@@ -87,97 +91,61 @@ async function runMilestone11BTests() {
   }
 
   // =========================================================================
-  // GROUP B: INTAKE MODE SELECTION & AYUSH PROTOTYPE FRAMEWORK
+  // GROUP B: VERIFY COMPLETE REMOVAL OF AYUSH & INTAKE MODE
   // =========================================================================
-  console.log('\n--- Group B: Intake Mode & AYUSH Prototype Framework ---')
+  console.log('\n--- Group B: Verification of AYUSH & Intake Mode Removal ---')
   try {
     const intakeModePath = path.join(WORKSPACE_DIR, 'src/screens/IntakeMode.jsx')
-    assert(fs.existsSync(intakeModePath), 'IntakeMode.jsx must exist')
-    const intakeContent = fs.readFileSync(intakeModePath, 'utf8')
+    assert(!fs.existsSync(intakeModePath), 'IntakeMode.jsx file must be deleted')
 
-    assert(intakeContent.includes('Standard Clinical Intake'), 'IntakeMode has Standard Clinical Intake')
-    assert(intakeContent.includes('AYUSH Intake — Prototype'), 'IntakeMode has AYUSH Intake Prototype')
-    assert(intakeContent.includes('ayush-disclaimer-box'), 'IntakeMode has AYUSH prototype disclaimer banner')
-    assert(intakeContent.includes('ReadAloud'), 'IntakeMode has accessible ReadAloud button')
-    assert(intakeContent.includes('onSelectIntakeMode'), 'IntakeMode updates intakeMode state')
-    pass('IntakeMode screen offers Standard and AYUSH Prototype options with clear disclaimer')
-  } catch (e) {
-    fail('IntakeMode screen components and options', e)
-  }
-
-  try {
     const appPath = path.join(WORKSPACE_DIR, 'src/App.jsx')
     const appContent = fs.readFileSync(appPath, 'utf8')
-    assert(appContent.includes("const [intakeMode, setIntakeMode] = useState('standard')"), 'Default intakeMode is standard')
-    assert(appContent.includes("setIntakeMode('standard')"), 'New intake resets intakeMode to standard')
-    pass('App.jsx manages intakeMode state with standard as default')
-  } catch (e) {
-    fail('App.jsx intakeMode state management', e)
-  }
+    assert(!appContent.includes('IntakeMode'), 'App.jsx must not import or use IntakeMode')
+    assert(!appContent.includes('intakeMode'), 'App.jsx must not maintain intakeMode state')
+    assert(!appContent.includes('ayush'), 'App.jsx must not contain ayush references')
 
-  try {
-    // Verify AYUSH mode does NOT introduce fake/invented clinical questions in the AI logic
-    const interviewPath = path.join(WORKSPACE_DIR, 'src/screens/Interview.jsx')
-    const interviewContent = fs.readFileSync(interviewPath, 'utf8')
-    assert(!interviewContent.includes('Prakriti'), 'No invented Prakriti questions')
-    assert(!interviewContent.includes('Agni assessment'), 'No invented Agni assessment questions')
-    assert(!interviewContent.includes('Dashavidha Pariksha'), 'No invented Dashavidha questions')
-    pass('AYUSH Mode is strictly a UI framework prototype and does not fabricate clinical questions')
+    assert(!translations.English.intakeMode, 'English translations must not contain intakeMode')
+    assert(!translations.Hindi.intakeMode, 'Hindi translations must not contain intakeMode')
+
+    const cssPath = path.join(WORKSPACE_DIR, 'src/App.css')
+    const cssContent = fs.readFileSync(cssPath, 'utf8')
+    assert(!cssContent.includes('.intake-mode-selector'), 'CSS must not contain .intake-mode-selector')
+    assert(!cssContent.includes('.ayush-disclaimer-box'), 'CSS must not contain .ayush-disclaimer-box')
+
+    pass('AYUSH Mode and Intake Mode screen completely removed from codebase')
   } catch (e) {
-    fail('AYUSH boundary validation', e)
+    fail('AYUSH and Intake Mode removal verification', e)
   }
 
   // =========================================================================
-  // GROUP C: TOUCHSCREEN NUMERIC KEYPAD FOR IDENTITY VERIFICATION
+  // GROUP C: VERIFY COMPLETE REMOVAL OF KEYPAD & RETENTION OF NORMAL INPUT
   // =========================================================================
-  console.log('\n--- Group C: Touchscreen Numeric Keypad for Identity Verification ---')
+  console.log('\n--- Group C: Removal of Numeric Keypad & Retention of Normal Input ---')
   try {
     const idPath = path.join(WORKSPACE_DIR, 'src/screens/IdentityVerification.jsx')
     const idContent = fs.readFileSync(idPath, 'utf8')
 
-    assert(idContent.includes('kiosk-keypad-container'), 'IdentityVerification contains kiosk-keypad-container')
-    assert(idContent.includes('kiosk-keypad-grid'), 'IdentityVerification contains kiosk-keypad-grid')
-    assert(idContent.includes('handleKeypadInput'), 'IdentityVerification has keypad digit input handler')
-    assert(idContent.includes('handleKeypadBackspace'), 'IdentityVerification has keypad backspace handler')
-    assert(idContent.includes('handleKeypadClear'), 'IdentityVerification has keypad clear handler')
-    assert(idContent.includes('keypad-btn'), 'IdentityVerification renders keypad buttons')
-    assert(idContent.includes('keypad-backspace-btn'), 'IdentityVerification renders backspace button')
-    assert(idContent.includes('keypad-clear-btn'), 'IdentityVerification renders clear button')
-    assert(idContent.includes('type="text"'), 'Standard keyboard input remains fully functional')
+    assert(!idContent.includes('kiosk-keypad-container'), 'IdentityVerification must not contain kiosk-keypad-container')
+    assert(!idContent.includes('kiosk-keypad-grid'), 'IdentityVerification must not contain kiosk-keypad-grid')
+    assert(!idContent.includes('handleKeypadInput'), 'IdentityVerification must not contain handleKeypadInput')
+    assert(!idContent.includes('handleKeypadBackspace'), 'IdentityVerification must not contain handleKeypadBackspace')
+    assert(!idContent.includes('handleKeypadClear'), 'IdentityVerification must not contain handleKeypadClear')
+    assert(!idContent.includes('keypad-btn'), 'IdentityVerification must not contain keypad-btn')
+
+    assert(idContent.includes('type="text"'), 'Standard keyboard text input remains fully functional')
+    assert(idContent.includes('masked-input'), 'Masked input styling preserved')
+    assert(idContent.includes('touch-target'), 'Input retains touch-target accessibility class')
     assert(idContent.includes('IdCardIcon'), 'Visual guidance ID icon rendered in header')
-    pass('IdentityVerification features 12-key touchscreen numeric keypad and preserves physical keyboard typing')
-  } catch (e) {
-    fail('IdentityVerification keypad components', e)
-  }
+    assert(idContent.includes('mockDisclaimer'), 'Mock disclaimer banner preserved')
 
-  try {
-    // Simulate keypad helper logic in isolation
-    let val = 'XXXX XXXX 1234'
-    const simulateInput = (digit) => {
-      const current = val === 'XXXX XXXX 1234' ? '' : val
-      const digitsOnly = current.replace(/\s+/g, '')
-      if (/^\d*$/.test(digitsOnly) && digitsOnly.length < 12) {
-        const next = digitsOnly + digit
-        return next.replace(/(\d{4})(?=\d)/g, '$1 ')
-      }
-      return current + digit
-    }
-    const simulateBackspace = (curr) => {
-      if (!curr || curr === 'XXXX XXXX 1234') return ''
-      return curr.trimEnd().slice(0, -1)
-    }
+    const cssPath = path.join(WORKSPACE_DIR, 'src/App.css')
+    const cssContent = fs.readFileSync(cssPath, 'utf8')
+    assert(!cssContent.includes('.kiosk-keypad-container'), 'CSS must not contain .kiosk-keypad-container')
+    assert(!cssContent.includes('.keypad-btn'), 'CSS must not contain .keypad-btn')
 
-    val = simulateInput('5')
-    assert.strictEqual(val, '5', 'Typing 5 on placeholder starts with 5')
-    val = simulateInput('6')
-    assert.strictEqual(val, '56', 'Typing 6 appends to 56')
-    val = simulateBackspace(val)
-    assert.strictEqual(val, '5', 'Backspace removes 6 leaving 5')
-    val = ''
-    assert.strictEqual(val, '', 'Clear clears value')
-    pass('Keypad logic accurately handles digit appending, backspace, and clear')
+    pass('Touchscreen Numeric Keypad completely removed; normal touch-friendly input preserved')
   } catch (e) {
-    fail('Keypad simulation logic', e)
+    fail('Numeric Keypad removal verification', e)
   }
 
   // =========================================================================
@@ -188,12 +156,6 @@ async function runMilestone11BTests() {
     assert(translations.English, 'English translation exists')
     assert(translations.Hindi, 'Hindi translation exists')
 
-    // Verify intakeMode translations
-    assert(translations.English.intakeMode?.title, 'English intakeMode.title exists')
-    assert(translations.Hindi.intakeMode?.title, 'Hindi intakeMode.title exists')
-    assert(translations.Hindi.intakeMode?.ayushDisclaimer, 'Hindi intakeMode.ayushDisclaimer exists')
-    assert(translations.Hindi.intakeMode?.standardTitle, 'Hindi intakeMode.standardTitle exists')
-
     // Verify Welcome translations
     assert(translations.English.welcome?.chooseLanguage, 'English welcome.chooseLanguage exists')
     assert(translations.Hindi.welcome?.chooseLanguage, 'Hindi welcome.chooseLanguage exists')
@@ -202,12 +164,8 @@ async function runMilestone11BTests() {
     assert.strictEqual(translations.Hindi.identity?.defaultTag, 'प्राथमिक', 'Hindi default tag is प्राथमिक')
     assert.strictEqual(translations.Hindi.identity?.smsTag, 'एसएमएस', 'Hindi SMS tag is एसएमएस')
     assert.strictEqual(translations.Hindi.identity?.hospitalIdTag, 'अस्पताल आईडी', 'Hindi Hospital ID tag is अस्पताल आईडी')
-    assert.strictEqual(translations.Hindi.identity?.keypadClear, 'साफ़ करें', 'Hindi clear is साफ़ करें')
-    assert.strictEqual(translations.Hindi.identity?.keypadBackspace, '⌫', 'Hindi backspace icon is ⌫')
 
     // Verify common keys
-    assert(translations.Hindi.common?.clear, 'Hindi common.clear exists')
-    assert(translations.Hindi.common?.backspace, 'Hindi common.backspace exists')
     assert(translations.Hindi.common?.upload, 'Hindi common.upload exists')
     assert(translations.Hindi.common?.skip, 'Hindi common.skip exists')
 
@@ -232,8 +190,6 @@ async function runMilestone11BTests() {
 
     assert(cssContent.includes('.touch-target'), 'CSS defines .touch-target')
     assert(cssContent.includes('min-height: 48px'), 'CSS enforces min-height 48px on touch targets')
-    assert(cssContent.includes('.keypad-btn'), 'CSS styles .keypad-btn')
-    assert(cssContent.includes('min-height: 62px'), 'Keypad buttons have 62px height (>= 56px requirement)')
     assert(cssContent.includes('.submit-intake-btn'), 'CSS styles .submit-intake-btn')
     assert(cssContent.includes('min-height: 60px'), 'Submit button has 60px height')
     assert(cssContent.includes(':focus-visible'), 'CSS provides high-contrast :focus-visible rules')

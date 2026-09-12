@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import AppHeader from './components/AppHeader'
 import Welcome from './screens/Welcome'
-import IntakeMode from './screens/IntakeMode'
 import Consent from './screens/Consent'
 import IdentityVerification from './screens/IdentityVerification'
 import OTPVerification from './screens/OTPVerification'
@@ -51,7 +50,6 @@ export default function App() {
   const [language, setLanguage] = useState(getInitialLanguage)
   const [theme, setTheme] = useState(getInitialTheme)
   const [screen, setScreen] = useState('welcome')
-  const [intakeMode, setIntakeMode] = useState('standard')
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -142,7 +140,6 @@ export default function App() {
   // Navigation handlers
   const handleStart = () => {
     setScreen('consent')
-    setScreen('intake_mode')
   }
 
   const handleConsentContinue = () => {
@@ -243,6 +240,9 @@ export default function App() {
         consent_timestamp: caseData.consent?.timestamp || new Date().toISOString(),
         chief_complaint: caseData.summary?.chiefComplaint || caseData.complaint?.chiefComplaint || '',
         symptoms: caseData.complaint?.associatedSymptoms || '',
+        severity: caseData.complaint?.severity || caseData.interview?.answersByIndex?.[2] || '',
+        interview_answers: caseData.interview?.answersByIndex || extractAnswersByIndex(conversation),
+        red_flags: caseData.interview?.redFlags || extractRedFlagResponses(conversation),
         medical_history: caseData.summary?.pastMedicalHistory || '',
         medications: caseData.summary?.medications || '',
         allergies: caseData.summary?.allergies || '',
@@ -266,10 +266,14 @@ export default function App() {
 
       const result = await createCase(payload)
       const returnedCaseId = result.case_id || result.data?.case_id || caseData.caseId
+      const returnedPriority = result.priority || result.data?.priority || 'ROUTINE'
+      const returnedFlags = result.screening_flags || result.data?.screening_flags || []
 
       setCaseData((prev) => ({
         ...prev,
         caseId: returnedCaseId,
+        priority: returnedPriority,
+        screeningFlags: returnedFlags,
         status: 'ready_for_doctor',
         intakeTimestamp: new Date().toISOString()
       }))
@@ -372,7 +376,6 @@ export default function App() {
       }
     })
     setSelectedDoctorCase(null)
-    setIntakeMode('standard')
     setConversation([])
     setCurrentQuestionIndex(0)
     setIsInterviewFinished(false)
@@ -405,18 +408,6 @@ export default function App() {
           />
         )}
 
-        {/* Step 0.5: Intake Mode */}
-        {screen === 'intake_mode' && (
-          <IntakeMode
-            intakeMode={intakeMode}
-            onSelectIntakeMode={setIntakeMode}
-            onContinue={() => setScreen('consent')}
-            onBack={() => setScreen('welcome')}
-            language={language}
-            t={t}
-          />
-        )}
-
         {/* Step 1: Consent */}
         {screen === 'consent' && (
           <Consent
@@ -424,7 +415,6 @@ export default function App() {
             onUpdateCase={setCaseData}
             onContinue={handleConsentContinue}
             onBack={() => setScreen('welcome')}
-            onBack={() => setScreen('intake_mode')}
             language={language}
             t={t}
           />
